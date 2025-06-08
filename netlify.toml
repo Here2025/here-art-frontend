@@ -1,0 +1,15 @@
+[build]
+  command = "npm run build"
+  publish = "build"
+
+[build.environment]
+  NODE_VERSION = "18.20.8"
+  REACT_APP_API_URL = "https://backend-production-036e.up.railway.app"
+  REACT_APP_FIREBASE_API_KEY = "AIzaSyACl_D13npZOjUp8SRrKZHlnx48pmDoG1U"
+  REACT_APP_FIREBASE_AUTH_DOMAIN = "here-bf45a.firebaseapp.com"
+  REACT_APP_FIREBASE_PROJECT_ID = "here-bf45a"
+  REACT_APP_FIREBASE_APP_ID = "1:477699381656:web:b503a407fd56da3ab633ed"
+  REACT_APP_GEOAPIFY_API_KEY = "27a474a758814030b5c150337a6eb408"
+
+
+
