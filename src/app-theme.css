@@ -1,0 +1,105 @@
+:root {
+  --here-ink: #1e2a2f;
+  --here-muted: #6b7478;
+  --here-peach: #eba59a;
+  --here-peach-light: #f8c7bf;
+  --here-teal: #23a8b7;
+  --here-teal-dark: #0a6371;
+  --here-cream: #fff8f3;
+  --here-paper: #ffffff;
+  --here-line: rgba(30, 42, 47, 0.12);
+  --here-shadow: 0 22px 70px rgba(30, 42, 47, 0.16);
+}
+
+body {
+  background:
+    radial-gradient(circle at 15% 14%, rgba(35, 168, 183, 0.14), transparent 22rem),
+    linear-gradient(145deg, #f3f6f6 0%, #fff8f3 48%, #f7c8bf 100%);
+  color: var(--here-ink);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding-bottom: 94px;
+}
+
+.mobile-app-hero {
+  padding: 20px clamp(18px, 4vw, 64px) 46px;
+  background:
+    radial-gradient(circle at 15% 25%, rgba(35, 168, 183, 0.18), transparent 20rem),
+    radial-gradient(circle at 85% 5%, rgba(235, 165, 154, 0.72), transparent 30rem);
+}
+
+.top-nav,
+.hero-stage,
+.app-main {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.logo-button,
+.top-profile,
+.app-panel,
+.feed-card,
+.submission-form,
+.profile-card,
+.map-layout {
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid var(--here-line);
+  box-shadow: var(--here-shadow);
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--here-teal-dark);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.primary-button,
+.secondary-button,
+.ghost-button,
+.interaction-row button,
+.category-row button {
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--here-line);
+  padding: 0 18px;
+  font-weight: 900;
+}
+
+.primary-button {
+  background: var(--here-teal);
+  color: white;
+  border-color: var(--here-teal);
+}
+
+.secondary-button,
+.ghost-button {
+  background: white;
+  color: var(--here-ink);
+}
+
+.notice {
+  background: white;
+  border: 1px solid var(--here-line);
+  border-radius: 18px;
+  padding: 14px 16px;
+  color: var(--here-muted);
+}
+
+.notice.error { color: #8c2f24; }
+.notice.success { color: var(--here-teal-dark); }
