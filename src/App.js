@@ -66,9 +66,12 @@ export default function App() {
   const savedArtworks = useMemo(() => artworks.filter((artwork) => savedIds.has(artwork.id)), [artworks, savedIds]);
 
   const refreshMapSize = useCallback(() => {
-    window.setTimeout(() => {
+    const refresh = () => {
       if (mapRef.current) mapRef.current.invalidateSize(true);
-    }, 180);
+    };
+    window.requestAnimationFrame(refresh);
+    window.setTimeout(refresh, 220);
+    window.setTimeout(refresh, 700);
   }, []);
 
   const fetchArtworks = useCallback(async () => {
@@ -109,42 +112,77 @@ export default function App() {
   useEffect(() => { fetchArtworks(); }, [fetchArtworks]);
 
   useEffect(() => {
-    if (!window.L || !mapContainerRef.current || mapRef.current) return;
-    mapRef.current = window.L.map(mapContainerRef.current, { zoomControl: false, scrollWheelZoom: true, preferCanvas: true }).setView([DEFAULT_CENTER.lat, DEFAULT_CENTER.lng], 13);
-    window.L.control.zoom({ position: 'bottomright' }).addTo(mapRef.current);
-    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(mapRef.current);
-    markerLayerRef.current = window.L.layerGroup().addTo(mapRef.current);
-    userLayerRef.current = window.L.layerGroup().addTo(mapRef.current);
-    refreshMapSize();
     window.addEventListener('resize', refreshMapSize);
-    return () => window.removeEventListener('resize', refreshMapSize);
+    window.addEventListener('orientationchange', refreshMapSize);
+    return () => {
+      window.removeEventListener('resize', refreshMapSize);
+      window.removeEventListener('orientationchange', refreshMapSize);
+    };
   }, [refreshMapSize]);
 
-  useEffect(() => { refreshMapSize(); }, [activeSection, refreshMapSize]);
+  useEffect(() => {
+    if (activeSection !== 'map' || !window.L || !mapContainerRef.current) return;
+
+    if (!mapRef.current) {
+      mapRef.current = window.L.map(mapContainerRef.current, {
+        zoomControl: false,
+        scrollWheelZoom: true,
+        preferCanvas: true,
+      }).setView([DEFAULT_CENTER.lat, DEFAULT_CENTER.lng], 13);
+
+      window.L.control.zoom({ position: 'bottomright' }).addTo(mapRef.current);
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(mapRef.current);
+
+      markerLayerRef.current = window.L.layerGroup().addTo(mapRef.current);
+      userLayerRef.current = window.L.layerGroup().addTo(mapRef.current);
+    }
+
+    refreshMapSize();
+  }, [activeSection, refreshMapSize]);
 
   useEffect(() => {
-    if (!window.L || !mapRef.current || !markerLayerRef.current) return;
+    if (activeSection !== 'map' || !window.L || !mapRef.current || !markerLayerRef.current) return;
     markerLayerRef.current.clearLayers();
+
     filteredArtworks.forEach((artwork) => {
       const isSelected = featuredArtwork?.id === artwork.id;
       const marker = window.L.marker([artwork.lat, artwork.lng], {
-        icon: window.L.divIcon({ className: `here-marker ${isSelected ? 'selected' : ''}`, html: `<span>${getCategoryIcon(artwork.category)}</span>`, iconSize: [38, 38], iconAnchor: [19, 19] }),
+        icon: window.L.divIcon({
+          className: `here-marker ${isSelected ? 'selected' : ''}`,
+          html: `<span>${getCategoryIcon(artwork.category)}</span>`,
+          iconSize: [38, 38],
+          iconAnchor: [19, 19],
+        }),
       }).addTo(markerLayerRef.current);
       marker.on('click', () => { setSelectedArtwork(artwork); setActiveSection('map'); });
     });
-    if (filteredArtworks.length > 0) {
+
+    if (featuredArtwork?.lat && featuredArtwork?.lng) {
+      mapRef.current.setView([featuredArtwork.lat, featuredArtwork.lng], 15, { animate: true });
+    } else if (filteredArtworks.length > 0) {
       const bounds = window.L.latLngBounds(filteredArtworks.map((artwork) => [artwork.lat, artwork.lng]));
       mapRef.current.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
     }
+
     refreshMapSize();
-  }, [featuredArtwork, filteredArtworks, refreshMapSize]);
+  }, [activeSection, featuredArtwork, filteredArtworks, refreshMapSize]);
 
   useEffect(() => {
-    if (!window.L || !mapRef.current || !userLayerRef.current) return;
+    if (activeSection !== 'map' || !window.L || !mapRef.current || !userLayerRef.current) return;
     userLayerRef.current.clearLayers();
     if (!userLocation) return;
-    window.L.circleMarker([userLocation.lat, userLocation.lng], { radius: 9, color: '#ffffff', fillColor: '#30a8b5', fillOpacity: 1, weight: 4 }).addTo(userLayerRef.current);
-  }, [userLocation]);
+    window.L.circleMarker([userLocation.lat, userLocation.lng], {
+      radius: 9,
+      color: '#ffffff',
+      fillColor: '#30a8b5',
+      fillOpacity: 1,
+      weight: 4,
+    }).addTo(userLayerRef.current);
+    refreshMapSize();
+  }, [activeSection, userLocation, refreshMapSize]);
 
   const handleChange = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
   const updateSet = (setter, id) => setter((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; });
@@ -152,10 +190,12 @@ export default function App() {
   const selectArtwork = (artwork) => {
     setSelectedArtwork(artwork);
     setActiveSection('map');
-    if (mapRef.current && artwork.lat && artwork.lng) {
-      mapRef.current.setView([artwork.lat, artwork.lng], 16, { animate: true });
+    window.setTimeout(() => {
+      if (mapRef.current && artwork.lat && artwork.lng) {
+        mapRef.current.setView([artwork.lat, artwork.lng], 16, { animate: true });
+      }
       refreshMapSize();
-    }
+    }, 250);
   };
 
   const useMyLocation = () => {
@@ -174,8 +214,10 @@ export default function App() {
         setForm((current) => ({ ...current, lat: String(lat), lng: String(lng) }));
         setStatus('Location added. You can now save it to a submission.');
         setActiveSection('map');
-        if (mapRef.current) mapRef.current.setView([lat, lng], 15, { animate: true });
-        refreshMapSize();
+        window.setTimeout(() => {
+          if (mapRef.current) mapRef.current.setView([lat, lng], 15, { animate: true });
+          refreshMapSize();
+        }, 250);
       },
       () => { setError('Location permission was not granted. You can still enter coordinates manually.'); setStatus(''); },
       { enableHighAccuracy: true, timeout: 10000 }
