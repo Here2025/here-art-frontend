@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 
 const DEFAULT_CENTER = { lat: 35.7796, lng: -78.6382 };
-const DEFAULT_API_URL = 'https://backend-production-036e.up.railway.app';
+const DEFAULT_API_URL = 'https://here-art-backend-production.up.railway.app';
 
 const normalizeArtwork = (item, index) => {
   const lat = Number(item.lat ?? item.latitude ?? item.location_lat ?? item.location?.lat);
@@ -53,7 +53,7 @@ function App() {
     (artwork) => Number.isFinite(artwork.lat) && Number.isFinite(artwork.lng)
   );
 
-  const fetchArtworks = async () => {
+  const fetchArtworks = useCallback(async () => {
     setIsLoading(true);
     setError('');
 
@@ -83,12 +83,11 @@ function App() {
       'The app could not load artwork from the backend yet. Check that Railway is awake and that the artwork route is enabled.'
     );
     console.warn(lastError);
-  };
+  }, [apiUrl]);
 
   useEffect(() => {
     fetchArtworks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiUrl]);
+  }, [fetchArtworks]);
 
   useEffect(() => {
     if (!window.L || !mapContainerRef.current || mapRef.current) return;
@@ -250,7 +249,7 @@ function App() {
           </div>
 
           <div className="hero-card" aria-label="App summary">
-            <span className="card-kicker">MVP live build</span>
+            <span className="card-kicker">Live app build</span>
             <h2>{positionedArtworks.length}</h2>
             <p>mapped artwork locations connected to the Railway backend.</p>
           </div>
