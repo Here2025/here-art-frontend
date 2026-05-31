@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import PlatformPreview from './PlatformPreview';
 
 const DEFAULT_CENTER = { lat: 35.7796, lng: -78.6382 };
 const DEFAULT_API_URL = 'https://here-art-backend-production.up.railway.app';
@@ -291,6 +292,7 @@ export default function App() {
           <div className="category-row" aria-label="Filter artwork categories">{CATEGORIES.map((category) => <button key={category} className={activeCategory === category ? 'active' : ''} onClick={() => setActiveCategory(category)} type="button">{category}</button>)}</div>
           {isLoading && <div className="notice">Loading artwork from Railway...</div>}
           <div className="feed-grid">{filteredArtworks.map((artwork) => <ArtworkCard key={artwork.id} artwork={artwork} saved={savedIds.has(artwork.id)} liked={likedIds.has(artwork.id)} onSelect={selectArtwork} onSave={() => updateSet(setSavedIds, artwork.id)} onLike={() => updateSet(setLikedIds, artwork.id)} />)}</div>
+          <PlatformPreview apiUrl={apiUrl} />
         </section>
 
         <section className={`app-section map-app-section ${activeSection === 'map' ? 'is-active' : ''}`}>
