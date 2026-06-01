@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 const starter = {
   artwork: { title: '', artist: '', category: 'Mural', address: '', city: 'Raleigh', state: 'NC', description: '', imageUrl: '', lat: '', lng: '' },
   event: { title: '', eventType: 'Art Walk', venueName: '', address: '', city: 'Raleigh', state: 'NC', startsAt: '', endsAt: '', priceLabel: '', description: '', imageUrl: '', ticketUrl: '' },
-  profile: { displayName: '', handle: '', profileType: 'street_artist', city: 'Raleigh', state: 'NC', website: '', bio: '', imageUrl: '' },
+  profile: { displayName: '', handle: '', profileType: 'explorer', city: 'Raleigh', state: 'NC', website: '', bio: '', imageUrl: '' },
 };
 
 export default function AddCreatePage({ api, onNotice }) {
@@ -14,7 +14,7 @@ export default function AddCreatePage({ api, onNotice }) {
 
   const active = forms[mode];
   const title = useMemo(() => ({ artwork: 'Add artwork or place', event: 'Add creative event', profile: 'Create or claim profile' }[mode]), [mode]);
-  const subtitle = useMemo(() => ({ artwork: 'Pin a mural, gallery, installation, hidden gem, or creative place.', event: 'Share an art walk, opening, show, pop-up, performance, or creative gathering.', profile: 'Create the account that will own posts, events, journeys, and updates.' }[mode]), [mode]);
+  const subtitle = useMemo(() => ({ artwork: 'Pin a mural, gallery, installation, hidden gem, or creative place.', event: 'Share an art walk, opening, show, pop-up, performance, or creative gathering.', profile: 'Create an explorer, artist, gallery, host, or creative account on HERE.' }[mode]), [mode]);
 
   function update(field, value) {
     setForms((current) => ({ ...current, [mode]: { ...current[mode], [field]: value } }));
@@ -164,13 +164,13 @@ function EventFields({ value, update }) {
 
 function ProfileFields({ value, update }) {
   return <>
-    <Field label="Profile name"><input value={value.displayName} onChange={(e) => update('displayName', e.target.value)} placeholder="Artist, gallery, venue, band, or host name" /></Field>
+    <Field label="Profile name"><input value={value.displayName} onChange={(e) => update('displayName', e.target.value)} placeholder="Your name, artist name, gallery, venue, band, or host name" /></Field>
     <Field label="Handle"><input value={value.handle} onChange={(e) => update('handle', e.target.value)} placeholder="example-name" /></Field>
-    <Field label="Profile type"><select value={value.profileType} onChange={(e) => update('profileType', e.target.value)}><option value="street_artist">Street Artist</option><option value="musician">Musician / Performer</option><option value="gallery">Gallery</option><option value="venue">Venue</option><option value="collective">Collective</option><option value="curator">Curator / Host</option></select></Field>
+    <Field label="Profile type"><select value={value.profileType} onChange={(e) => update('profileType', e.target.value)}><option value="explorer">Explorer / Art Enthusiast / Traveler</option><option value="street_artist">Street Artist</option><option value="musician">Musician / Performer</option><option value="gallery">Gallery</option><option value="venue">Venue</option><option value="collective">Collective</option><option value="curator">Curator / Host</option></select></Field>
     <Field label="Website"><input value={value.website} onChange={(e) => update('website', e.target.value)} placeholder="Optional website" /></Field>
     <Field label="City"><input value={value.city} onChange={(e) => update('city', e.target.value)} /></Field>
     <Field label="State"><input value={value.state} onChange={(e) => update('state', e.target.value)} /></Field>
     <Field label="Profile image URL" wide><input value={value.imageUrl} onChange={(e) => update('imageUrl', e.target.value)} placeholder="Profile image upload comes next" /></Field>
-    <Field label="Bio" wide><textarea value={value.bio} onChange={(e) => update('bio', e.target.value)} placeholder="Tell people who this profile represents." /></Field>
+    <Field label="Bio" wide><textarea value={value.bio} onChange={(e) => update('bio', e.target.value)} placeholder="Tell people how you use HERE, what kind of art you love, or who this profile represents." /></Field>
   </>;
 }
