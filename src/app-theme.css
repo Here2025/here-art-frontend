@@ -1,20 +1,20 @@
 :root {
-  --here-ink: #1e2a2f;
-  --here-muted: #6b7478;
-  --here-peach: #eba59a;
-  --here-peach-light: #f8c7bf;
-  --here-teal: #23a8b7;
-  --here-teal-dark: #0a6371;
-  --here-cream: #fff8f3;
+  --here-ink: #111111;
+  --here-muted: #666666;
+  --here-soft: #f5f5f5;
+  --here-soft-2: #eeeeee;
   --here-paper: #ffffff;
-  --here-line: rgba(30, 42, 47, 0.12);
-  --here-shadow: 0 22px 70px rgba(30, 42, 47, 0.16);
+  --here-line: rgba(17, 17, 17, 0.10);
+  --here-shadow: 0 24px 70px rgba(0, 0, 0, 0.08);
+  --here-peach: #111111;
+  --here-peach-light: #f5f5f5;
+  --here-teal: #111111;
+  --here-teal-dark: #111111;
+  --here-cream: #ffffff;
 }
 
 body {
-  background:
-    radial-gradient(circle at 15% 14%, rgba(35, 168, 183, 0.14), transparent 22rem),
-    linear-gradient(145deg, #f3f6f6 0%, #fff8f3 48%, #f7c8bf 100%);
+  background: #f3f3f3;
   color: var(--here-ink);
 }
 
@@ -36,9 +36,7 @@ button {
 
 .mobile-app-hero {
   padding: 20px clamp(18px, 4vw, 64px) 46px;
-  background:
-    radial-gradient(circle at 15% 25%, rgba(35, 168, 183, 0.18), transparent 20rem),
-    radial-gradient(circle at 85% 5%, rgba(235, 165, 154, 0.72), transparent 30rem);
+  background: #f3f3f3;
 }
 
 .top-nav,
@@ -55,16 +53,16 @@ button {
 .submission-form,
 .profile-card,
 .map-layout {
-  background: rgba(255, 255, 255, 0.84);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--here-line);
   box-shadow: var(--here-shadow);
 }
 
 .eyebrow {
   margin: 0 0 12px;
-  color: var(--here-teal-dark);
-  font-size: 0.76rem;
-  font-weight: 900;
+  color: #111111;
+  font-size: 0.72rem;
+  font-weight: 950;
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
@@ -82,9 +80,9 @@ button {
 }
 
 .primary-button {
-  background: var(--here-teal);
+  background: #111111;
   color: white;
-  border-color: var(--here-teal);
+  border-color: #111111;
 }
 
 .secondary-button,
@@ -101,5 +99,5 @@ button {
   color: var(--here-muted);
 }
 
-.notice.error { color: #8c2f24; }
-.notice.success { color: var(--here-teal-dark); }
+.notice.error { color: #111111; }
+.notice.success { color: #111111; }
