@@ -1,5 +1,11 @@
 # HERE Product Foundation
 
+## Official product direction
+
+HERE is part gallery, part city guide, part artist platform, and part creative event discovery engine.
+
+It is not just an art map. It is a living cultural discovery platform for the creative work happening around people in real places.
+
 ## Core idea
 
 HERE is the gallery for art that lives in the world.
@@ -18,6 +24,33 @@ The app should help users answer:
 - What street art, public art, or local creative work would I miss if I did not know where to look?
 - Which artists, musicians, galleries, collectives, and creative hosts should I be paying attention to?
 - What creative events are happening today or this week near me?
+- What creative journey can I take through this city, neighborhood, or weekend?
+
+## The four-part product identity
+
+### 1. Part gallery
+
+HERE gives street art, murals, public installations, gallery moments, and visual creative work a place to be seen, appreciated, saved, and revisited.
+
+The city becomes the exhibition space.
+
+### 2. Part city guide
+
+HERE helps people explore a city through its creative life: murals, hidden gems, art walks, local venues, neighborhood culture, and creative routes.
+
+The app should feel like a cultural guide, not just a directory.
+
+### 3. Part artist platform
+
+HERE gives street artists, musicians, performers, galleries, collectives, and creative hosts a profile and a place to show what they are creating.
+
+The platform should help overlooked or under-promoted talent become discoverable.
+
+### 4. Part creative event discovery engine
+
+HERE helps people find creative activity that might otherwise be missed: local bands, gallery openings, pop-ups, performances, poetry nights, mural unveilings, and community art events.
+
+The goal is visibility for creative moments that deserve an audience.
 
 ## Who HERE is for
 
@@ -140,6 +173,10 @@ Primary line:
 Supporting line:
 
 > Discover street art, local artists, creative events, and hidden cultural moments around you.
+
+Full positioning:
+
+> HERE is part gallery, part city guide, part artist platform, and part creative event discovery engine. It helps people discover street art, public creativity, local artists, creative events, and hidden cultural moments happening around them.
 
 Longer description:
 
