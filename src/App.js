@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PlatformPreview from './PlatformPreview';
+import ProfilePages from './ProfilePages';
 
 const DEFAULT_CENTER = { lat: 35.7796, lng: -78.6382 };
 const DEFAULT_API_URL = 'https://here-art-backend-production.up.railway.app';
@@ -316,7 +317,7 @@ export default function App() {
         </section>
 
         <section className={`app-section ${activeSection === 'profile' ? 'is-active' : ''}`}>
-          <div className="profile-layout"><div className="profile-card app-panel"><div className="avatar">Z</div><p className="eyebrow">Explorer profile</p><h2>Zelipa</h2><p>Art explorer, collector of hidden places, and early HERE community builder.</p><div className="profile-stats"><span><strong>{savedIds.size}</strong>Saved</span><span><strong>{likedIds.size}</strong>Liked</span><span><strong>{visitedIds.size}</strong>Check-ins</span></div><button className="primary-button" type="button">Sign-in flow coming next</button></div><div className="profile-card app-panel"><p className="eyebrow">Your saved map</p><h3>Places to revisit</h3><div className="saved-list">{savedArtworks.length > 0 ? savedArtworks.map((artwork) => <button key={artwork.id} onClick={() => selectArtwork(artwork)} type="button"><strong>{artwork.title}</strong><span>{artwork.address || artwork.neighborhood}</span></button>) : <p className="muted">Save artwork and places to build your personal art trail.</p>}</div></div></div>
+          <ProfilePages apiUrl={apiUrl} savedArtworks={savedArtworks} savedCount={savedIds.size} likedCount={likedIds.size} visitedCount={visitedIds.size} onSelectArtwork={selectArtwork} />
         </section>
       </main>
 
