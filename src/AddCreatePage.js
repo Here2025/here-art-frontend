@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 const starter = {
   artwork: { title: '', artist: '', category: 'Mural', address: '', city: 'Raleigh', state: 'NC', description: '', imageUrl: '', lat: '', lng: '' },
   event: { title: '', eventType: 'Art Walk', venueName: '', address: '', city: 'Raleigh', state: 'NC', startsAt: '', endsAt: '', priceLabel: '', description: '', imageUrl: '', ticketUrl: '' },
-  profile: { displayName: '', handle: '', profileType: 'explorer', city: 'Raleigh', state: 'NC', website: '', bio: '', imageUrl: '' },
+  profile: { displayName: '', handle: '', profileType: 'explorer', city: 'Raleigh', state: 'NC', website: '', bio: '', photoName: '', photoPreview: '' },
 };
 
 export default function AddCreatePage({ api, onNotice }) {
@@ -18,6 +18,19 @@ export default function AddCreatePage({ api, onNotice }) {
 
   function update(field, value) {
     setForms((current) => ({ ...current, [mode]: { ...current[mode], [field]: value } }));
+  }
+
+  function updateProfilePhoto(file) {
+    if (!file) return;
+    const previewUrl = URL.createObjectURL(file);
+    setForms((current) => ({
+      ...current,
+      profile: {
+        ...current.profile,
+        photoName: file.name,
+        photoPreview: previewUrl,
+      },
+    }));
   }
 
   function validate() {
@@ -86,9 +99,9 @@ export default function AddCreatePage({ api, onNotice }) {
           state: active.state.trim(),
           website: active.website.trim(),
           bio: active.bio.trim(),
-          imageUrl: active.imageUrl.trim(),
+          imageUrl: '',
         });
-        setStatus('Profile submitted. It may appear after refresh or review.');
+        setStatus('Profile submitted. Photo preview is local for now. Permanent photo upload comes next.');
       }
       setForms((current) => ({ ...current, [mode]: starter[mode] }));
       onNotice?.('Submission received. Refresh content after backend review/approval is connected.');
@@ -117,7 +130,7 @@ export default function AddCreatePage({ api, onNotice }) {
       <form className="create-form-panel" onSubmit={submit}>
         {mode === 'artwork' && <ArtworkFields value={active} update={update} />}
         {mode === 'event' && <EventFields value={active} update={update} />}
-        {mode === 'profile' && <ProfileFields value={active} update={update} />}
+        {mode === 'profile' && <ProfileFields value={active} update={update} updateProfilePhoto={updateProfilePhoto} />}
         {status && <div className="create-status">{status}</div>}
         <div className="create-form-actions">
           <button type="button" onClick={() => setForms((current) => ({ ...current, [mode]: starter[mode] }))}>Clear</button>
@@ -162,15 +175,25 @@ function EventFields({ value, update }) {
   </>;
 }
 
-function ProfileFields({ value, update }) {
+function ProfileFields({ value, update, updateProfilePhoto }) {
   return <>
     <Field label="Profile name"><input value={value.displayName} onChange={(e) => update('displayName', e.target.value)} placeholder="Your name, artist name, gallery, venue, band, or host name" /></Field>
     <Field label="Handle"><input value={value.handle} onChange={(e) => update('handle', e.target.value)} placeholder="example-name" /></Field>
-    <Field label="Profile type"><select value={value.profileType} onChange={(e) => update('profileType', e.target.value)}><option value="explorer">Explorer / Art Enthusiast / Traveler</option><option value="street_artist">Street Artist</option><option value="musician">Musician / Performer</option><option value="gallery">Gallery</option><option value="venue">Venue</option><option value="collective">Collective</option><option value="curator">Curator / Host</option></select></Field>
+    <Field label="Profile type"><select value={value.profileType} onChange={(e) => update('profileType', e.target.value)}><option value="explorer">Explorer</option><option value="street_artist">Street Artist</option><option value="musician">Musician / Performer</option><option value="gallery">Gallery</option><option value="venue">Venue</option><option value="collective">Collective</option><option value="curator">Curator / Host</option></select></Field>
     <Field label="Website"><input value={value.website} onChange={(e) => update('website', e.target.value)} placeholder="Optional website" /></Field>
     <Field label="City"><input value={value.city} onChange={(e) => update('city', e.target.value)} /></Field>
     <Field label="State"><input value={value.state} onChange={(e) => update('state', e.target.value)} /></Field>
-    <Field label="Profile image URL" wide><input value={value.imageUrl} onChange={(e) => update('imageUrl', e.target.value)} placeholder="Profile image upload comes next" /></Field>
+    <div className="profile-photo-upload wide">
+      <span>Upload profile photo</span>
+      <div className="profile-photo-upload-box">
+        <div className="profile-photo-preview">{value.photoPreview ? <img src={value.photoPreview} alt="Profile preview" /> : <strong>{value.displayName ? value.displayName.slice(0, 1).toUpperCase() : 'H'}</strong>}</div>
+        <div>
+          <label className="upload-button">Choose photo<input type="file" accept="image/*" onChange={(e) => updateProfilePhoto(e.target.files?.[0])} /></label>
+          <p>{value.photoName || 'No photo selected yet.'}</p>
+          <small>This preview works now. Permanent image storage will be connected when we build uploads.</small>
+        </div>
+      </div>
+    </div>
     <Field label="Bio" wide><textarea value={value.bio} onChange={(e) => update('bio', e.target.value)} placeholder="Tell people how you use HERE, what kind of art you love, or who this profile represents." /></Field>
   </>;
 }
