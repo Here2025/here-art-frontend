@@ -4,6 +4,7 @@ import App from './App';
 import './index.css';
 import './app-redesign.css';
 import './app-web.css';
+import './app-interactions.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
