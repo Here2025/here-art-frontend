@@ -12,9 +12,9 @@
 
 .category-row button.active,
 .interaction-row button.active {
-  background: var(--here-teal);
+  background: #111;
   color: white;
-  border-color: var(--here-teal);
+  border-color: #111;
 }
 
 .feed-grid {
@@ -24,25 +24,28 @@
 }
 
 .feed-card {
-  border-radius: 30px;
+  border-radius: 34px;
   overflow: hidden;
+  background: #fff;
+  border: 1px solid #e8e8e8;
 }
 
 .feed-visual {
   width: 100%;
-  min-height: 220px;
+  min-height: 250px;
   border: 0;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--here-peach), var(--here-teal));
-  color: white;
+  background: #f3f3f3;
+  color: #111;
 }
 
 .feed-visual span {
   width: 92px;
   height: 92px;
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.25);
+  background: #fff;
+  border: 1px solid #e8e8e8;
   display: grid;
   place-items: center;
   font-size: 3rem;
@@ -51,12 +54,12 @@
 
 .feed-visual img {
   width: 100%;
-  height: 240px;
+  height: 270px;
   object-fit: cover;
 }
 
 .feed-body {
-  padding: 20px;
+  padding: 22px;
 }
 
 .feed-meta,
@@ -64,7 +67,7 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  color: var(--here-teal-dark);
+  color: #111;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: 0.72rem;
@@ -77,6 +80,7 @@
 .profile-card h3 {
   margin: 10px 0 8px;
   letter-spacing: -0.04em;
+  color: #111;
 }
 
 .map-layout {
@@ -91,7 +95,7 @@
   border-radius: 26px;
   overflow: hidden;
   min-height: 620px;
-  background: #dcecef;
+  background: #e8e8e8;
 }
 
 .map-container {
@@ -117,16 +121,16 @@
   width: 38px;
   height: 38px;
   border-radius: 16px 16px 16px 4px;
-  background: var(--here-peach);
+  background: #111;
   color: white;
   border: 3px solid white;
-  box-shadow: 0 10px 22px rgba(30, 42, 47, 0.28);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
   font-weight: 900;
   transform: rotate(-10deg);
 }
 
 .here-marker.selected span {
-  background: var(--here-teal);
+  background: #000;
   transform: scale(1.1) rotate(-10deg);
 }
 
@@ -148,14 +152,15 @@
 .detail-placeholder {
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--here-peach), var(--here-teal));
-  color: white;
+  background: #f3f3f3;
+  color: #111;
   font-size: 4rem;
   font-weight: 900;
+  border: 1px solid #e8e8e8;
 }
 
 .artist-line {
-  color: var(--here-teal-dark) !important;
+  color: #111 !important;
   font-weight: 900;
 }
 
@@ -165,7 +170,7 @@
 }
 
 .submission-form {
-  border-radius: 30px;
+  border-radius: 34px;
   padding: clamp(20px, 4vw, 34px);
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -210,7 +215,7 @@
   width: 82px;
   height: 82px;
   border-radius: 28px;
-  background: var(--here-teal);
+  background: #111;
   color: white;
   display: grid;
   place-items: center;
@@ -227,7 +232,7 @@
 
 .profile-stats span,
 .saved-list button {
-  background: rgba(35, 168, 183, 0.08);
+  background: #f7f7f7;
   border: 1px solid var(--here-line);
   border-radius: 18px;
   padding: 14px;
