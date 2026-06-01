@@ -86,7 +86,7 @@ function PlatformColumn({ title, items, emptyText, selectedItem, onSelect }) {
             <span>{item.label}</span>
             <strong>{item.title}</strong>
             <p>{item.summary}</p>
-            <em>View details</em>
+            <em>{item.kind === 'event' ? 'View event details' : 'View details'}</em>
           </button>
         ))
       )}
@@ -109,6 +109,8 @@ function DetailPanel({ item, profiles, onSelectProfile }) {
     : item.address
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}`
       : '';
+  const externalUrl = item.ticketUrl || item.websiteUrl || item.sponsorUrl || item.adUrl || item.infoUrl || '';
+  const externalLabel = item.isSponsored ? 'Visit sponsor website' : item.ticketUrl ? 'Tickets / info' : 'Visit website';
 
   return (
     <article className="platform-detail-panel">
@@ -124,10 +126,15 @@ function DetailPanel({ item, profiles, onSelectProfile }) {
         <div className="platform-host-card">
           <span>Hosted by / Posted by</span>
           {hostProfile ? (
-            <button type="button" onClick={() => onSelectProfile(hostProfile)}>
-              <strong>{hostProfile.displayName || hostProfile.name}</strong>
-              <small>{hostProfile.profileType || 'Creative profile'}</small>
-            </button>
+            <>
+              <button type="button" onClick={() => onSelectProfile(hostProfile)}>
+                <strong>{hostProfile.displayName || hostProfile.name}</strong>
+                <small>{hostProfile.profileType || 'Creative profile'}</small>
+              </button>
+              <button className="platform-host-profile-link" type="button" onClick={() => onSelectProfile(hostProfile)}>
+                View host profile
+              </button>
+            </>
           ) : (
             <p>Host profile will appear here when the event is connected to an account.</p>
           )}
@@ -148,11 +155,13 @@ function DetailPanel({ item, profiles, onSelectProfile }) {
         <button type="button">Like</button>
         <button type="button">Share</button>
         {mapsUrl && <a href={mapsUrl} target="_blank" rel="noreferrer">Open location</a>}
-        {item.ticketUrl && <a href={item.ticketUrl} target="_blank" rel="noreferrer">Tickets / info</a>}
+        {externalUrl && <a href={externalUrl} target="_blank" rel="noreferrer">{externalLabel}</a>}
       </div>
 
       <div className="platform-sponsored-slot">
-        Future sponsored placement: featured event, artist, venue, city trail, or nearby partner offer.
+        <strong>Sponsored / featured space</strong>
+        <p>Future paid placements can show event details inside HERE first, then use a clear website button for tickets, sponsors, venues, or partner offers.</p>
+        {externalUrl && <a href={externalUrl} target="_blank" rel="noreferrer">Open external link</a>}
       </div>
     </article>
   );
@@ -174,11 +183,11 @@ function decorateItem(item, kind, profiles) {
     return {
       ...item,
       kind,
-      label: item.eventType || 'Creative Event',
+      label: item.isSponsored ? 'Sponsored Event' : item.eventType || 'Creative Event',
       title: item.title || 'Creative event',
       summary: item.venueName || item.address || 'Event details coming soon.',
       description: item.description || 'This creative event is part of the HERE discovery layer.',
-      detailEyebrow: 'Creative event',
+      detailEyebrow: item.isSponsored ? 'Sponsored event' : 'Creative event',
       when: formatEventTime(item.startsAt, item.endsAt),
       where: item.venueName || item.address || '',
       price: item.priceLabel || '',
@@ -186,6 +195,10 @@ function decorateItem(item, kind, profiles) {
       latitude: item.latitude || item.lat,
       longitude: item.longitude || item.lng,
       ticketUrl: item.ticketUrl,
+      websiteUrl: item.websiteUrl || item.website_url,
+      sponsorUrl: item.sponsorUrl || item.sponsor_url,
+      adUrl: item.adUrl || item.ad_url,
+      infoUrl: item.infoUrl || item.info_url,
     };
   }
 
@@ -199,6 +212,7 @@ function decorateItem(item, kind, profiles) {
       description: item.bio || 'This account is part of the HERE artist and creative platform layer.',
       detailEyebrow: 'HERE account',
       cityState: [item.city, item.state].filter(Boolean).join(', '),
+      websiteUrl: item.websiteUrl || item.website_url || item.website,
     };
   }
 
@@ -212,6 +226,7 @@ function decorateItem(item, kind, profiles) {
     description: item.description || 'This journey will guide people through creative places and events.',
     detailEyebrow: curatorProfile ? `Curated by ${curatorProfile.displayName}` : 'Curated journey',
     cityState: [item.city, item.state].filter(Boolean).join(', '),
+    websiteUrl: item.websiteUrl || item.website_url,
   };
 }
 
