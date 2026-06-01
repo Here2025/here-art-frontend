@@ -5,6 +5,7 @@ import './index.css';
 import './app-redesign.css';
 import './app-web.css';
 import './app-interactions.css';
+import './app-map-look.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
