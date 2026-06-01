@@ -8,6 +8,7 @@ import './app-components.css';
 import './app-map.css';
 import './app-visuals.css';
 import './app-platform.css';
+import './app-profiles.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
