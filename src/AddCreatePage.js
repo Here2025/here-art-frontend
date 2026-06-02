@@ -6,7 +6,7 @@ const starter = {
   profile: { displayName: '', handle: '', profileType: 'explorer', city: '', region: '', country: '', website: '', bio: '', photoName: '', photoPreview: '' },
 };
 
-const eventCategories = ['Performing Arts', 'Visual Art', 'Street Art', 'Galleries & Exhibitions', 'Music', 'Film & Screenings', 'Creative Markets', 'Festivals', 'Workshops & Classes', 'Hidden Gems', 'Journeys / Art Walks'];
+const eventCategories = ['Performing Arts', 'Fashion', 'Visual Art', 'Street Art', 'Galleries & Exhibitions', 'Music', 'Film & Screenings', 'Creative Markets', 'Festivals', 'Workshops & Classes', 'Hidden Gems', 'Journeys / Art Walks'];
 
 export default function AddCreatePage({ api, onNotice }) {
   const [mode, setMode] = useState('artwork');
@@ -16,7 +16,7 @@ export default function AddCreatePage({ api, onNotice }) {
 
   const active = forms[mode];
   const title = useMemo(() => ({ artwork: 'Add artwork or place', event: 'Add creative event', profile: 'Create or claim profile' }[mode]), [mode]);
-  const subtitle = useMemo(() => ({ artwork: 'Pin a mural, gallery, installation, hidden gem, or creative place.', event: 'Share a performance, opening, show, pop-up, walk, screening, market, or creative gathering.', profile: 'Create an explorer, artist, gallery, host, or creative account on HERE.' }[mode]), [mode]);
+  const subtitle = useMemo(() => ({ artwork: 'Pin a mural, gallery, installation, hidden gem, or creative place.', event: 'Share a performance, fashion show, opening, pop-up, walk, screening, market, or creative gathering.', profile: 'Create an explorer, artist, designer, gallery, host, or creative account on HERE.' }[mode]), [mode]);
 
   function update(field, value) {
     setForms((current) => ({ ...current, [mode]: { ...current[mode], [field]: value } }));
@@ -180,10 +180,10 @@ function ArtworkFields({ value, update }) {
 
 function EventFields({ value, update }) {
   return <>
-    <Field label="Event title"><input value={value.title} onChange={(e) => update('title', e.target.value)} placeholder="Example: Hamilton, West End show, local stage play, gallery opening" /></Field>
+    <Field label="Event title"><input value={value.title} onChange={(e) => update('title', e.target.value)} placeholder="Example: Fashion week showcase, Hamilton, local stage play, gallery opening" /></Field>
     <Field label="Main category"><select value={value.mainCategory} onChange={(e) => update('mainCategory', e.target.value)}>{eventCategories.map((category) => <option key={category}>{category}</option>)}</select></Field>
-    <Field label="Local label"><input value={value.localLabel} onChange={(e) => update('localLabel', e.target.value)} placeholder="Broadway, West End, Kabuki, Opera, Stage Play..." /></Field>
-    <Field label="Venue / host"><input value={value.venueName} onChange={(e) => update('venueName', e.target.value)} placeholder="Venue, gallery, host, theater, or collective" /></Field>
+    <Field label="Local label"><input value={value.localLabel} onChange={(e) => update('localLabel', e.target.value)} placeholder="Runway, street style, Broadway, West End, Kabuki, Opera..." /></Field>
+    <Field label="Venue / host"><input value={value.venueName} onChange={(e) => update('venueName', e.target.value)} placeholder="Venue, gallery, host, theater, designer, or collective" /></Field>
     <Field label="Price"><input value={value.priceLabel} onChange={(e) => update('priceLabel', e.target.value)} placeholder="Free, $10, RSVP, ticketed, etc." /></Field>
     <Field label="Starts"><input type="datetime-local" value={value.startsAt} onChange={(e) => update('startsAt', e.target.value)} /></Field>
     <Field label="Ends"><input type="datetime-local" value={value.endsAt} onChange={(e) => update('endsAt', e.target.value)} /></Field>
@@ -199,9 +199,9 @@ function EventFields({ value, update }) {
 
 function ProfileFields({ value, update, updateProfilePhoto }) {
   return <>
-    <Field label="Profile name"><input value={value.displayName} onChange={(e) => update('displayName', e.target.value)} placeholder="Your name, artist name, gallery, venue, band, or host name" /></Field>
+    <Field label="Profile name"><input value={value.displayName} onChange={(e) => update('displayName', e.target.value)} placeholder="Your name, artist name, designer, gallery, venue, band, or host name" /></Field>
     <Field label="Handle"><input value={value.handle} onChange={(e) => update('handle', e.target.value)} placeholder="example-name" /></Field>
-    <Field label="Profile type"><select value={value.profileType} onChange={(e) => update('profileType', e.target.value)}><option value="explorer">Explorer</option><option value="street_artist">Street Artist</option><option value="musician">Musician / Performer</option><option value="gallery">Gallery</option><option value="venue">Venue</option><option value="collective">Collective</option><option value="curator">Curator / Host</option></select></Field>
+    <Field label="Profile type"><select value={value.profileType} onChange={(e) => update('profileType', e.target.value)}><option value="explorer">Explorer</option><option value="street_artist">Street Artist</option><option value="designer">Designer / Fashion Brand</option><option value="musician">Musician / Performer</option><option value="gallery">Gallery</option><option value="venue">Venue</option><option value="collective">Collective</option><option value="curator">Curator / Host</option></select></Field>
     <Field label="Website"><input value={value.website} onChange={(e) => update('website', e.target.value)} placeholder="Optional website" /></Field>
     <Field label="City"><input value={value.city} onChange={(e) => update('city', e.target.value)} placeholder="Lusaka, London, Tokyo, Raleigh..." /></Field>
     <Field label="Region / State / Province"><input value={value.region} onChange={(e) => update('region', e.target.value)} placeholder="Optional" /></Field>
