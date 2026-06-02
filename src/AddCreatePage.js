@@ -2,9 +2,11 @@ import React, { useMemo, useState } from 'react';
 
 const starter = {
   artwork: { title: '', artist: '', category: 'Mural', address: '', city: 'Raleigh', state: 'NC', description: '', imageUrl: '', lat: '', lng: '' },
-  event: { title: '', eventType: 'Art Walk', venueName: '', address: '', city: 'Raleigh', state: 'NC', startsAt: '', endsAt: '', priceLabel: '', description: '', imageUrl: '', ticketUrl: '' },
+  event: { title: '', mainCategory: 'Performing Arts', localLabel: '', eventType: 'Performing Arts', venueName: '', address: '', city: 'Raleigh', region: 'NC', country: 'United States', startsAt: '', endsAt: '', priceLabel: '', description: '', imageUrl: '', ticketUrl: '' },
   profile: { displayName: '', handle: '', profileType: 'explorer', city: '', region: '', country: '', website: '', bio: '', photoName: '', photoPreview: '' },
 };
+
+const eventCategories = ['Performing Arts', 'Visual Art', 'Street Art', 'Galleries & Exhibitions', 'Music', 'Film & Screenings', 'Creative Markets', 'Festivals', 'Workshops & Classes', 'Hidden Gems', 'Journeys / Art Walks'];
 
 export default function AddCreatePage({ api, onNotice }) {
   const [mode, setMode] = useState('artwork');
@@ -14,7 +16,7 @@ export default function AddCreatePage({ api, onNotice }) {
 
   const active = forms[mode];
   const title = useMemo(() => ({ artwork: 'Add artwork or place', event: 'Add creative event', profile: 'Create or claim profile' }[mode]), [mode]);
-  const subtitle = useMemo(() => ({ artwork: 'Pin a mural, gallery, installation, hidden gem, or creative place.', event: 'Share an art walk, opening, show, pop-up, performance, or creative gathering.', profile: 'Create an explorer, artist, gallery, host, or creative account on HERE.' }[mode]), [mode]);
+  const subtitle = useMemo(() => ({ artwork: 'Pin a mural, gallery, installation, hidden gem, or creative place.', event: 'Share a performance, opening, show, pop-up, walk, screening, market, or creative gathering.', profile: 'Create an explorer, artist, gallery, host, or creative account on HERE.' }[mode]), [mode]);
 
   function update(field, value) {
     setForms((current) => ({ ...current, [mode]: { ...current[mode], [field]: value } }));
@@ -75,19 +77,33 @@ export default function AddCreatePage({ api, onNotice }) {
         });
         setStatus('Artwork/place submitted. It may appear after refresh or review.');
       } else if (mode === 'event') {
+        const displayType = active.localLabel.trim() || active.mainCategory;
         await postSubmission('/api/events', {
           title: active.title.trim(),
-          eventType: active.eventType.trim(),
+          mainCategory: active.mainCategory,
+          main_category: active.mainCategory,
+          localLabel: active.localLabel.trim(),
+          local_label: active.localLabel.trim(),
+          eventType: displayType,
+          event_type: displayType,
           venueName: active.venueName.trim(),
+          venue_name: active.venueName.trim(),
           address: active.address.trim(),
           city: active.city.trim(),
-          state: active.state.trim(),
+          region: active.region.trim(),
+          state: active.region.trim(),
+          country: active.country.trim(),
           startsAt: active.startsAt,
+          starts_at: active.startsAt,
           endsAt: active.endsAt,
+          ends_at: active.endsAt,
           priceLabel: active.priceLabel.trim(),
+          price_label: active.priceLabel.trim(),
           description: active.description.trim(),
           imageUrl: active.imageUrl.trim(),
+          image_url: active.imageUrl.trim(),
           ticketUrl: active.ticketUrl.trim(),
+          ticket_url: active.ticketUrl.trim(),
         });
         setStatus('Event submitted. It may appear after refresh or review.');
       } else {
@@ -164,13 +180,17 @@ function ArtworkFields({ value, update }) {
 
 function EventFields({ value, update }) {
   return <>
-    <Field label="Event title"><input value={value.title} onChange={(e) => update('title', e.target.value)} placeholder="Example: First Friday Creative Walk" /></Field>
-    <Field label="Event type"><input value={value.eventType} onChange={(e) => update('eventType', e.target.value)} placeholder="Art Walk, Live Music, Gallery Opening" /></Field>
-    <Field label="Venue / host"><input value={value.venueName} onChange={(e) => update('venueName', e.target.value)} placeholder="Venue, gallery, host, or collective" /></Field>
-    <Field label="Price"><input value={value.priceLabel} onChange={(e) => update('priceLabel', e.target.value)} placeholder="Free, $10, RSVP, etc." /></Field>
+    <Field label="Event title"><input value={value.title} onChange={(e) => update('title', e.target.value)} placeholder="Example: Hamilton, West End show, local stage play, gallery opening" /></Field>
+    <Field label="Main category"><select value={value.mainCategory} onChange={(e) => update('mainCategory', e.target.value)}>{eventCategories.map((category) => <option key={category}>{category}</option>)}</select></Field>
+    <Field label="Local label"><input value={value.localLabel} onChange={(e) => update('localLabel', e.target.value)} placeholder="Broadway, West End, Kabuki, Opera, Stage Play..." /></Field>
+    <Field label="Venue / host"><input value={value.venueName} onChange={(e) => update('venueName', e.target.value)} placeholder="Venue, gallery, host, theater, or collective" /></Field>
+    <Field label="Price"><input value={value.priceLabel} onChange={(e) => update('priceLabel', e.target.value)} placeholder="Free, $10, RSVP, ticketed, etc." /></Field>
     <Field label="Starts"><input type="datetime-local" value={value.startsAt} onChange={(e) => update('startsAt', e.target.value)} /></Field>
     <Field label="Ends"><input type="datetime-local" value={value.endsAt} onChange={(e) => update('endsAt', e.target.value)} /></Field>
     <Field label="Address" wide><input value={value.address} onChange={(e) => update('address', e.target.value)} placeholder="Event location" /></Field>
+    <Field label="City"><input value={value.city} onChange={(e) => update('city', e.target.value)} placeholder="New York, London, Cairo, Tokyo..." /></Field>
+    <Field label="Region / State / Province"><input value={value.region} onChange={(e) => update('region', e.target.value)} placeholder="Optional" /></Field>
+    <Field label="Country"><input value={value.country} onChange={(e) => update('country', e.target.value)} placeholder="Country" /></Field>
     <Field label="Image URL"><input value={value.imageUrl} onChange={(e) => update('imageUrl', e.target.value)} placeholder="Event image" /></Field>
     <Field label="Website / tickets"><input value={value.ticketUrl} onChange={(e) => update('ticketUrl', e.target.value)} placeholder="Optional external link" /></Field>
     <Field label="Description" wide><textarea value={value.description} onChange={(e) => update('description', e.target.value)} placeholder="What will people experience?" /></Field>
