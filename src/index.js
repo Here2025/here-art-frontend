@@ -9,6 +9,7 @@ import './app-map-look.css';
 import './app-create.css';
 import './app-footer.css';
 import './app-typography.css';
+import './app-investor-demo.css';
 import './app-navigation-scroll.js';
 import './app-footer.js';
 
