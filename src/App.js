@@ -415,7 +415,88 @@ function EventsPage({ event, host, events, saved, save, openEvent, openProfile }
 function ProfilePage({ profile, profiles, artworks, events, journeys, followed, follow, openProfile, openEvent }) {
   const [tab, setTab] = useState('artworks');
   const [messageOpen, setMessageOpen] = useState(false);
-  return <section className="page profile-page"><aside className="profile-info-panel"><div className="profile-head-real"><Avatar profile={profile} large /><div><h1>{profile.displayName}</h1><p>{profile.handle ? `@${profile.handle}` : typeLabel(profile.profileType)}</p><span>{[profile.city, profile.state].filter(Boolean).join(', ')}</span>{profile.website && <a href={profile.website} target="_blank" rel="noreferrer">{profile.website}</a>}</div></div><div className="stats-grid"><span><strong>{artworks.length}</strong>Artworks</span><span><strong>{events.length}</strong>Events</span><span><strong>{journeys.length}</strong>Journeys</span><span><strong>{followed ? '1.2K+' : '1.2K'}</strong>Followers</span></div><div className="button-row"><button className={followed ? 'active' : ''} onClick={follow} type="button">{followed ? 'Following' : 'Follow'}</button><button onClick={() => setMessageOpen((v) => !v)} type="button">Message</button></div>{messageOpen && <div className="message-panel"><strong>Message {profile.displayName}</strong><p>Messaging will connect when HERE accounts are added. For now, this confirms the message action is working.</p><button onClick={() => setMessageOpen(false)} type="button">Close</button></div>}<p>{profile.bio}</p></aside><div className="profile-gallery-panel"><div className="tabs-real"><button className={tab === 'artworks' ? 'active' : ''} onClick={() => setTab('artworks')} type="button">Artworks</button><button className={tab === 'events' ? 'active' : ''} onClick={() => setTab('events')} type="button">Events</button><button className={tab === 'journeys' ? 'active' : ''} onClick={() => setTab('journeys')} type="button">Journeys</button></div>{tab === 'artworks' && <div className="profile-art-grid-real">{artworks.slice(0, 6).map((a) => <ImageTile key={a.id} item={a} />)}</div>}{tab === 'events' && <div className="content-grid three">{(events.length ? events : fallbackEvents).slice(0, 6).map((e) => <EventCard key={e.id} event={e} onClick={() => openEvent(e)} />)}</div>}{tab === 'journeys' && <div className="content-grid three">{(journeys.length ? journeys : fallbackJourneys).slice(0, 6).map((j) => <JourneyCard key={j.id} journey={j} />)}</div>}</div><section className="full-row"><SectionHeader title="More creators" /><div className="creator-row">{profiles.filter((x) => x.id !== profile.id).slice(0, 5).map((x) => <button key={x.id} onClick={() => openProfile(x)} type="button"><Avatar profile={x} /><span>{x.displayName}</span></button>)}</div></section></section>;
+
+  return (
+    <section className="page profile-page">
+      <aside className="profile-info-panel">
+        <div className="profile-head-real">
+          <Avatar profile={profile} large />
+          <div>
+            <h1>{profile.displayName}</h1>
+            <p>{profile.handle ? `@${profile.handle}` : typeLabel(profile.profileType)}</p>
+            <span>{[profile.city, profile.state].filter(Boolean).join(', ')}</span>
+            {profile.website && <a href={profile.website} target="_blank" rel="noreferrer">{profile.website}</a>}
+          </div>
+        </div>
+
+        <div className="stats-grid">
+          <span><strong>{artworks.length}</strong>Artworks</span>
+          <span><strong>{events.length}</strong>Events</span>
+          <span><strong>{journeys.length}</strong>Journeys</span>
+          <span><strong>{followed ? '1.2K+' : '1.2K'}</strong>Followers</span>
+        </div>
+
+        <div className="button-row">
+          <button className={followed ? 'active' : ''} onClick={follow} type="button">{followed ? 'Following' : 'Follow'}</button>
+          <button onClick={() => setMessageOpen((v) => !v)} type="button">Message</button>
+        </div>
+
+        {messageOpen && (
+          <div className="message-panel">
+            <strong>Message {profile.displayName}</strong>
+            <p>Messaging will connect when HERE accounts are added. For now, this confirms the message action is working.</p>
+            <button onClick={() => setMessageOpen(false)} type="button">Close</button>
+          </div>
+        )}
+
+        <p>{profile.bio}</p>
+      </aside>
+
+      <div className="profile-gallery-panel">
+        <div className="tabs-real">
+          <button className={tab === 'artworks' ? 'active' : ''} onClick={() => setTab('artworks')} type="button">Artworks</button>
+          <button className={tab === 'events' ? 'active' : ''} onClick={() => setTab('events')} type="button">Events</button>
+          <button className={tab === 'journeys' ? 'active' : ''} onClick={() => setTab('journeys')} type="button">Journeys</button>
+        </div>
+
+        {tab === 'artworks' && (
+          artworks.length ? (
+            <div className="profile-art-grid-real">{artworks.slice(0, 6).map((a) => <ImageTile key={a.id} item={a} />)}</div>
+          ) : (
+            <p className="empty-text">No artwork connected to this profile yet.</p>
+          )
+        )}
+
+        {tab === 'events' && (
+          events.length ? (
+            <div className="content-grid three">{events.slice(0, 6).map((e) => <EventCard key={e.id} event={e} onClick={() => openEvent(e)} />)}</div>
+          ) : (
+            <p className="empty-text">No events posted by this profile yet.</p>
+          )
+        )}
+
+        {tab === 'journeys' && (
+          journeys.length ? (
+            <div className="content-grid three">{journeys.slice(0, 6).map((j) => <JourneyCard key={j.id} journey={j} />)}</div>
+          ) : (
+            <p className="empty-text">No journeys created by this profile yet.</p>
+          )
+        )}
+      </div>
+
+      <section className="full-row">
+        <SectionHeader title="More creators" />
+        <div className="creator-row">
+          {profiles.filter((x) => x.id !== profile.id).slice(0, 5).map((x) => (
+            <button key={x.id} onClick={() => openProfile(x)} type="button">
+              <Avatar profile={x} />
+              <span>{x.displayName}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+    </section>
+  );
 }
 
 function SavedPage({ savedArtworks, savedEvents, likedArtworks, checkIns, followed, openArt, openEvent, openProfile }) {
