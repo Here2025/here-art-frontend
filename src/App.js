@@ -146,7 +146,17 @@ function mapUrl(x) {
 }
 
 function searchableText(x) {
-  return [x.title, x.artist, x.description, x.address, x.neighborhood, x.category, x.eventType, x.venueName, x.city, x.state].filter(Boolean).join(' ').toLowerCase();
+  return [x.title, x.artist, x.description, x.address, x.neighborhood, x.category, x.eventType, x.venueName, x.city, x.state]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
+function categoryText(x) {
+  return [x.category, x.title, x.artist, x.description, x.eventType, x.venueName]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
 }
 
 function match(x, q) {
@@ -156,11 +166,90 @@ function match(x, q) {
 
 function matchCat(item, category) {
   if (!category || category === 'All') return true;
-  const option = categoryOptions.find((c) => c.label === category);
-  if (!option) return true;
-  if (option.matcher) return option.matcher(item);
-  const text = searchableText(item);
-  return option.terms?.some((term) => text.includes(term)) ?? true;
+
+  const categoryValue = String(item.category || '').toLowerCase();
+  const eventValue = String(item.eventType || '').toLowerCase();
+  const text = categoryText(item);
+
+  if (category === 'Street Art') {
+    return (
+      categoryValue.includes('street art') ||
+      categoryValue.includes('mural') ||
+      text.includes('street art') ||
+      text.includes('mural') ||
+      text.includes('graffiti')
+    );
+  }
+
+  if (category === 'Public Art') {
+    return (
+      categoryValue.includes('public art') ||
+      categoryValue.includes('installation') ||
+      categoryValue.includes('sculpture') ||
+      text.includes('public art') ||
+      text.includes('installation') ||
+      text.includes('sculpture') ||
+      text.includes('monument') ||
+      text.includes('memorial')
+    );
+  }
+
+  if (category === 'Gallery') {
+    return (
+      categoryValue.includes('gallery') ||
+      categoryValue.includes('studio') ||
+      text.includes('gallery') ||
+      text.includes('artspace') ||
+      text.includes('arts center') ||
+      text.includes('creative space')
+    );
+  }
+
+  if (category === 'Museum') {
+    return (
+      categoryValue.includes('museum') ||
+      text.includes('museum') ||
+      text.includes('collection') ||
+      text.includes('exhibition')
+    );
+  }
+
+  if (category === 'Performing Arts') {
+    return (
+      categoryValue.includes('performing') ||
+      categoryValue.includes('music') ||
+      categoryValue.includes('theatre') ||
+      categoryValue.includes('theater') ||
+      eventValue.includes('music') ||
+      eventValue.includes('performance') ||
+      text.includes('theatre') ||
+      text.includes('theater') ||
+      text.includes('stage') ||
+      text.includes('concert') ||
+      text.includes('venue')
+    );
+  }
+
+  if (category === 'Fashion') {
+    return (
+      categoryValue.includes('fashion') ||
+      text.includes('fashion') ||
+      text.includes('designer') ||
+      text.includes('runway') ||
+      text.includes('style')
+    );
+  }
+
+  if (category === 'Hidden Gem') {
+    return (
+      categoryValue.includes('hidden') ||
+      text.includes('hidden gem') ||
+      text.includes('independent') ||
+      text.includes('local favorite')
+    );
+  }
+
+  return true;
 }
 
 export default function App() {
