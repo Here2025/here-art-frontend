@@ -30,6 +30,16 @@ const categoryOptions = [
   { label: 'Hidden Gem', terms: ['hidden', 'gem', 'alley', 'local', 'independent'] },
 ];
 
+const categoryVisuals = {
+  'Street Art': art[0],
+  'Public Art': art[1],
+  'Gallery': art[2],
+  'Museum': art[3],
+  'Performing Arts': 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=900&q=80',
+  'Fashion': 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80',
+  'Hidden Gem': art[5],
+};
+
 const fallbackProfiles = [
   { id: 'p1', displayName: 'HERE City Curator', handle: 'here-curator', profileType: 'curator', bio: 'A curator profile showing how HERE connects street art, public art, events, profiles, and journeys.', city: 'Raleigh', state: 'NC', website: '', imageUrl: people[0] },
   { id: 'p2', displayName: 'Walllight Studio', handle: 'walllight', profileType: 'street_artist', bio: 'A visual storyteller creating public art, murals, and city-based work.', city: 'Raleigh', state: 'NC', website: '', imageUrl: people[1] },
@@ -137,6 +147,28 @@ function typeLabel(v = '') {
   return String(v).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function normalizeCategory(v = '') {
+  const text = String(v || '').toLowerCase();
+
+  if (text.includes('street art') || text.includes('mural') || text.includes('graffiti')) return 'Street Art';
+  if (text.includes('public art') || text.includes('installation') || text.includes('sculpture') || text.includes('monument') || text.includes('memorial')) return 'Public Art';
+  if (text.includes('gallery') || text.includes('galleries') || text.includes('studio') || text.includes('exhibition') || text.includes('artspace') || text.includes('arts center') || text.includes('creative space')) return 'Gallery';
+  if (text.includes('museum') || text.includes('collection')) return 'Museum';
+  if (text.includes('performing') || text.includes('performance') || text.includes('music') || text.includes('theatre') || text.includes('theater') || text.includes('opera') || text.includes('ballet') || text.includes('symphony') || text.includes('concert') || text.includes('stage') || text.includes('venue')) return 'Performing Arts';
+  if (text.includes('fashion') || text.includes('designer') || text.includes('runway') || text.includes('brand') || text.includes('style')) return 'Fashion';
+  if (text.includes('hidden') || text.includes('gem')) return 'Hidden Gem';
+
+  return '';
+}
+
+function displayCategory(v = '') {
+  return normalizeCategory(v) || v || 'Creative Place';
+}
+
+function rawCategory(item) {
+  return item?.category || item?.mainCategory || item?.main_category || item?.eventType || item?.event_type || '';
+}
+
 function mapUrl(x) {
   const lat = x?.lat ?? x?.latitude;
   const lng = x?.lng ?? x?.longitude;
@@ -167,91 +199,18 @@ function match(x, q) {
 function matchCat(item, category) {
   if (!category || category === 'All') return true;
 
-  const categoryValue = String(item.category || '').toLowerCase();
-  const eventValue = String(item.eventType || '').toLowerCase();
+  const normalized = normalizeCategory(rawCategory(item));
+
+  if (normalized) {
+    return normalized === category;
+  }
+
+  const option = categoryOptions.find((c) => c.label === category);
+  if (!option) return true;
+
   const text = categoryText(item);
-
-  if (category === 'Street Art') {
-    return (
-      categoryValue.includes('street art') ||
-      categoryValue.includes('mural') ||
-      text.includes('street art') ||
-      text.includes('mural') ||
-      text.includes('graffiti')
-    );
-  }
-
-  if (category === 'Public Art') {
-    return (
-      categoryValue.includes('public art') ||
-      categoryValue.includes('installation') ||
-      categoryValue.includes('sculpture') ||
-      text.includes('public art') ||
-      text.includes('installation') ||
-      text.includes('sculpture') ||
-      text.includes('monument') ||
-      text.includes('memorial')
-    );
-  }
-
-  if (category === 'Gallery') {
-    return (
-      categoryValue.includes('gallery') ||
-      categoryValue.includes('studio') ||
-      text.includes('gallery') ||
-      text.includes('artspace') ||
-      text.includes('arts center') ||
-      text.includes('creative space')
-    );
-  }
-
-  if (category === 'Museum') {
-    return (
-      categoryValue.includes('museum') ||
-      text.includes('museum') ||
-      text.includes('collection') ||
-      text.includes('exhibition')
-    );
-  }
-
-  if (category === 'Performing Arts') {
-    return (
-      categoryValue.includes('performing') ||
-      categoryValue.includes('music') ||
-      categoryValue.includes('theatre') ||
-      categoryValue.includes('theater') ||
-      eventValue.includes('music') ||
-      eventValue.includes('performance') ||
-      text.includes('theatre') ||
-      text.includes('theater') ||
-      text.includes('stage') ||
-      text.includes('concert') ||
-      text.includes('venue')
-    );
-  }
-
-  if (category === 'Fashion') {
-    return (
-      categoryValue.includes('fashion') ||
-      text.includes('fashion') ||
-      text.includes('designer') ||
-      text.includes('runway') ||
-      text.includes('style')
-    );
-  }
-
-  if (category === 'Hidden Gem') {
-    return (
-      categoryValue.includes('hidden') ||
-      text.includes('hidden gem') ||
-      text.includes('independent') ||
-      text.includes('local favorite')
-    );
-  }
-
-  return true;
+  return option.terms?.some((term) => text.includes(term)) ?? true;
 }
-
 export default function App() {
   const api = useMemo(() => (process.env.REACT_APP_API_URL || API).replace(/\/$/, ''), []);
   const [page, setPage] = useState('discover');
@@ -396,15 +355,59 @@ function AppHeader({ page, setPage }) {
 
 function DiscoverPage({ artworks, events, selectedArt, saved, liked, query, cat, setQuery, setCat, clear, save, like, openArt, openEvent, openMap, openEvents }) {
   const places = artworks.filter((a) => match(a, query) && matchCat(a, cat));
-  const evs = events.filter((e) => match(e, query));
+  const relatedEvents = events.filter((e) => match(e, query) && matchCat(e, cat));
+  const showAllEvents = cat === 'All' && !query;
+  const visibleEvents = showAllEvents ? events : relatedEvents;
   const hero = places[0] || selectedArt;
   const visibleCategories = categoryOptions.filter((x) => x.label !== 'All');
-  return <section className="page discover-page"><div className="discover-hero"><p className="small-kicker">Street and public artist visibility starts here</p><h1>Find art<br />where you are</h1><p className="hero-subcopy">HERE is a location-based creative discovery app for street art, public art, galleries, performances, fashion, events, and hidden cultural places.</p><SearchBar text="Search art, places, artists, events, or cities..." value={query} onChange={setQuery} /><FeatureArtwork artwork={hero} onClick={() => openArt(hero)} /></div><div className="discover-sidebar"><SectionHeader title="Explore creative categories" action="Clear filters" onAction={clear} /><div className="category-grid-real category-grid-expanded">{visibleCategories.map((x, i) => <button className={cat === x.label ? 'active' : ''} key={x.label} onClick={() => setCat(x.label)} type="button"><ImageTile item={{ imageUrl: art[(i + 1) % art.length], title: x.label }} /><span>{x.label}</span></button>)}</div><SectionHeader title={query ? 'Search results' : 'Creative events'} action="See events" onAction={openEvents} /><div className="content-grid three">{(evs.length ? evs : events).slice(0, 3).map((e) => <EventCard key={e.id} event={e} onClick={() => openEvent(e)} />)}{!evs.length && query && <p className="empty-text">No matching events yet. Try a place, category, or artist search.</p>}</div><SectionHeader title={cat === 'All' && !query ? 'Creative places near you' : 'Matching creative places'} action="See map" onAction={openMap} /><div className="content-grid three">{places.slice(0, 3).map((a) => <ArtworkCard key={a.id} artwork={a} saved={saved.has(a.id)} liked={liked.has(a.id)} save={() => save(a.id)} like={() => like(a.id)} onClick={() => openArt(a)} />)}{!places.length && <p className="empty-text">No matching places yet. Try another search or clear filters.</p>}</div></div></section>;
+
+  return (
+    <section className="page discover-page">
+      <div className="discover-hero">
+        <p className="small-kicker">Street and public artist visibility starts here</p>
+        <h1>Find art<br />where you are</h1>
+        <p className="hero-subcopy">
+          HERE is a location-based creative discovery app for street art, public art, galleries, performances, fashion, events, and hidden cultural places.
+        </p>
+        <SearchBar text="Search art, places, artists, events, or cities..." value={query} onChange={setQuery} />
+        <FeatureArtwork artwork={hero} onClick={() => openArt(hero)} />
+      </div>
+
+      <div className="discover-sidebar">
+        <SectionHeader title="Explore creative categories" action="Clear filters" onAction={clear} />
+
+        <div className="category-grid-real category-grid-expanded">
+          {visibleCategories.map((x) => (
+            <button className={cat === x.label ? 'active' : ''} key={x.label} onClick={() => setCat(x.label)} type="button">
+              <ImageTile item={{ imageUrl: categoryVisuals[x.label] || art[0], title: '' }} />
+              <span>{x.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <SectionHeader title={cat === 'All' && !query ? 'Creative places near you' : 'Matching creative places'} action="See map" onAction={openMap} />
+        <div className="content-grid three">
+          {places.slice(0, 3).map((a) => (
+            <ArtworkCard key={a.id} artwork={a} saved={saved.has(a.id)} liked={liked.has(a.id)} save={() => save(a.id)} like={() => like(a.id)} onClick={() => openArt(a)} />
+          ))}
+          {!places.length && <p className="empty-text">No matching places yet. Try another search or clear filters.</p>}
+        </div>
+
+        <SectionHeader title={showAllEvents ? 'Creative events' : 'Related creative events'} action="See events" onAction={openEvents} />
+        <div className="content-grid three">
+          {visibleEvents.slice(0, 3).map((e) => (
+            <EventCard key={e.id} event={e} onClick={() => openEvent(e)} />
+          ))}
+          {!visibleEvents.length && <p className="empty-text">No related events for this filter yet.</p>}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function MapPage({ box, artworks, selected, saved, visited, setSelected, save, check, q, setQ, category, setCategory }) {
   const url = mapUrl(selected);
-  return <section className="page map-page"><div className="page-title-row"><div><h1>Creative Map</h1><p>Explore street art, public art, galleries, stages, fashion, and hidden creative places connected to location.</p></div><SearchBar text="Search this area" value={q} onChange={setQ} /></div><div className="map-filter-row">{categoryOptions.map((option) => <button className={category === option.label ? 'active' : ''} key={option.label} onClick={() => setCategory(option.label)} type="button">{option.label}</button>)}</div><div className="map-grid"><div className="map-canvas" ref={box} role="application" aria-label="HERE map" /><aside className="selected-place-card"><ImageTile item={selected} /><p className="label">Selected creative place</p><h2>{selected.title}</h2><small>{selected.category || 'Creative place'} · {selected.artist || 'Artist / place details'}</small><p>{selected.description}</p><span>{selected.address || selected.neighborhood}</span><div className="button-row"><button className={saved ? 'active' : ''} onClick={save} type="button">{saved ? 'Saved' : 'Save place'}</button><button className={visited ? 'active' : ''} onClick={check} type="button">{visited ? 'Checked in' : 'Check in'}</button>{url && <a href={url} target="_blank" rel="noreferrer">Open location</a>}</div><SectionHeader title="Nearby creative places" /><div className="mini-list">{artworks.slice(0, 5).map((a) => <button className={a.id === selected.id ? 'active' : ''} onClick={() => setSelected(a.id)} key={a.id} type="button"><ImageTile item={a} /><span><strong>{a.title}</strong><small>{a.category || 'Creative place'} · {a.neighborhood || a.address}</small></span></button>)}{!artworks.length && <p className="empty-text">No matching places yet. Clear search or choose All.</p>}</div></aside></div></section>;
+  return <section className="page map-page"><div className="page-title-row"><div><h1>Creative Map</h1><p>Explore street art, public art, galleries, stages, fashion, and hidden creative places connected to location.</p></div><SearchBar text="Search this area" value={q} onChange={setQ} /></div><div className="map-filter-row">{categoryOptions.map((option) => <button className={category === option.label ? 'active' : ''} key={option.label} onClick={() => setCategory(option.label)} type="button">{option.label}</button>)}</div><div className="map-grid"><div className="map-canvas" ref={box} role="application" aria-label="HERE map" /><aside className="selected-place-card"><ImageTile item={selected} /><p className="label">Selected creative place</p><h2>{selected.title}</h2><small>{displayCategory(selected.category)} · {selected.artist || 'Artist / place details'}</small><p>{selected.description}</p><span>{selected.address || selected.neighborhood}</span><div className="button-row"><button className={saved ? 'active' : ''} onClick={save} type="button">{saved ? 'Saved' : 'Save place'}</button><button className={visited ? 'active' : ''} onClick={check} type="button">{visited ? 'Checked in' : 'Check in'}</button>{url && <a href={url} target="_blank" rel="noreferrer">Open location</a>}</div><SectionHeader title="Nearby creative places" /><div className="mini-list">{artworks.slice(0, 5).map((a) => <button className={a.id === selected.id ? 'active' : ''} onClick={() => setSelected(a.id)} key={a.id} type="button"><ImageTile item={a} /><span><strong>{a.title}</strong><small>{displayCategory(a.category)} · {a.neighborhood || a.address}</small></span></button>)}{!artworks.length && <p className="empty-text">No matching places yet. Clear search or choose All.</p>}</div></aside></div></section>;
 }
 
 function EventsPage({ event, host, events, saved, save, openEvent, openProfile }) {
@@ -518,7 +521,7 @@ function SectionHeader({ title, action, onAction }) {
 }
 
 function FeatureArtwork({ artwork, onClick }) {
-  return <button className="feature-real" onClick={onClick} type="button"><ImageTile item={artwork} /><div><span>Street / public art spotlight</span><strong>{artwork.title}</strong><small>{artwork.category || artwork.address || artwork.neighborhood}</small></div><em>Open map</em></button>;
+  return <button className="feature-real" onClick={onClick} type="button"><ImageTile item={artwork} /><div><span>Street / public art spotlight</span><strong>{artwork.title}</strong><small>{displayCategory(artwork.category) || artwork.address || artwork.neighborhood}</small></div><em>Open map</em></button>;
 }
 
 function ImageTile({ item }) {
