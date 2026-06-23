@@ -52,25 +52,54 @@ function ensureAccountStyles() {
       font-weight: 800;
     }
 
-    .here-account-actions {
-      display: flex;
-      flex-wrap: wrap;
+    .here-account-actions,
+    .create-gate-note.ready .button-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 10px;
+      align-items: stretch;
+      width: 100%;
+      margin-top: 4px;
     }
 
-    .here-account-actions button {
+    .here-account-actions button,
+    .create-gate-note.ready .button-row button {
+      width: 100%;
+      min-height: 44px;
       border: 1px solid #111;
       border-radius: 999px;
       background: #111;
       color: #fff;
-      padding: 10px 15px;
+      padding: 11px 16px;
       font-weight: 800;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
       cursor: pointer;
+      box-shadow: none;
     }
 
-    .here-account-actions button.secondary {
+    .here-account-actions button.secondary,
+    .create-gate-note.ready .button-row button:first-child {
       background: #fff;
       color: #111;
+    }
+
+    .create-gate-note.ready .button-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 12px;
+    }
+
+    @media (max-width: 760px) {
+      .here-account-actions,
+      .create-gate-note.ready .button-row {
+        grid-template-columns: 1fr;
+      }
+
+      .here-account-actions button,
+      .create-gate-note.ready .button-row button {
+        white-space: normal;
+      }
     }
   `;
   document.head.appendChild(style);
