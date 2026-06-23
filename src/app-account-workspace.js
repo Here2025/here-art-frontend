@@ -59,6 +59,7 @@ function ensureAccountStyles() {
       background: #fff;
       display: grid;
       gap: 18px;
+      overflow: hidden;
     }
 
     .here-account-workspace p,
@@ -79,42 +80,56 @@ function ensureAccountStyles() {
       font-weight: 800;
     }
 
-    .here-account-actions,
-    .create-gate-note.ready .button-row {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+    .here-account-actions {
+      display: flex;
+      flex-wrap: wrap;
       gap: 10px;
-      align-items: stretch;
+      align-items: center;
       width: 100%;
       margin-top: 4px;
     }
 
+    .create-gate-note.ready .button-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .here-account-actions button,
+    .create-gate-note.ready .button-row button,
+    .here-follower-card {
+      border: 1px solid #111;
+      box-shadow: none;
+    }
+
     .here-account-actions button,
     .create-gate-note.ready .button-row button {
-      width: 100%;
       min-height: 44px;
-      border: 1px solid #111;
       border-radius: 999px;
       background: #111;
       color: #fff;
       padding: 11px 16px;
       font-weight: 800;
-      line-height: 1;
+      line-height: 1.1;
       text-align: center;
       white-space: nowrap;
       cursor: pointer;
-      box-shadow: none;
+      flex: 1 1 155px;
+      max-width: 220px;
+    }
+
+    .create-gate-note.ready .button-row button {
+      width: 100%;
+      max-width: none;
     }
 
     .here-account-actions button.secondary,
     .create-gate-note.ready .button-row button:first-child {
       background: #fff;
       color: #111;
-    }
-
-    .create-gate-note.ready .button-row {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      margin-top: 12px;
     }
 
     .here-followers-panel {
@@ -135,7 +150,6 @@ function ensureAccountStyles() {
     }
 
     .here-follower-card {
-      border: 1px solid #111;
       border-radius: 20px;
       padding: 14px;
       display: grid;
@@ -143,6 +157,15 @@ function ensureAccountStyles() {
       align-items: center;
       gap: 10px;
       background: #fff;
+      color: #111;
+      text-align: left;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .here-follower-card:hover,
+    .here-follower-card:focus-visible {
+      background: #f6f6f6;
     }
 
     .here-follower-avatar {
@@ -174,8 +197,9 @@ function ensureAccountStyles() {
     }
 
     @media (max-width: 960px) {
-      .here-account-actions {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      .here-account-actions button {
+        flex-basis: calc(50% - 10px);
+        max-width: none;
       }
 
       .here-followers-list {
@@ -186,11 +210,14 @@ function ensureAccountStyles() {
     @media (max-width: 760px) {
       .here-account-actions,
       .create-gate-note.ready .button-row {
+        display: grid;
         grid-template-columns: 1fr;
       }
 
       .here-account-actions button,
       .create-gate-note.ready .button-row button {
+        width: 100%;
+        max-width: none;
         white-space: normal;
       }
     }
@@ -253,17 +280,36 @@ function relabelProfileNav(profile) {
   });
 }
 
+function openFollowerProfile(name) {
+  const cards = Array.from(document.querySelectorAll('button'));
+  const target = cards.find((button) => {
+    const text = button.textContent || '';
+    const isAccountCard = button.closest('[data-here-account-workspace]');
+    return !isAccountCard && text.includes(name);
+  });
+
+  if (target) {
+    target.click();
+    return;
+  }
+
+  const notice = document.querySelector('[data-account-followers-panel] .here-follower-note');
+  if (notice) {
+    notice.textContent = `${name}'s profile is part of the prototype follower list. Full follower-to-profile routing will connect when live accounts are added.`;
+  }
+}
+
 function followerCards() {
   return readFollowers()
     .map((follower) => `
-      <article class="here-follower-card">
+      <button class="here-follower-card" type="button" data-follower-name="${follower.name}">
         <span class="here-follower-avatar">${followerInitials(follower.name)}</span>
         <span>
           <strong>${follower.name}</strong>
           <small>${follower.handle || ''}</small>
         </span>
-        <p class="here-follower-note">${follower.note || 'Follower'}</p>
-      </article>
+        <span class="here-follower-note">${follower.note || 'Follower'}</span>
+      </button>
     `)
     .join('');
 }
@@ -303,7 +349,7 @@ function renderAccountWorkspace(profile) {
       <div class="here-followers-list">
         ${followerCards()}
       </div>
-      <p class="here-follower-note">These are prototype followers for the local account experience. Live follower data will come from real accounts when authentication is connected.</p>
+      <p class="here-follower-note">Click a follower to open their profile. These are prototype followers until live accounts are connected.</p>
     </section>
   `;
 
@@ -313,6 +359,9 @@ function renderAccountWorkspace(profile) {
   panel.querySelector('[data-account-action="add-event"]')?.addEventListener('click', () => goToCreate('event'));
   panel.querySelector('[data-account-action="followers"]')?.addEventListener('click', () => toggleFollowers(panel));
   panel.querySelector('[data-account-action="my-space"]')?.addEventListener('click', () => findButtonByText(['My Space', 'Saved'])?.click());
+  panel.querySelectorAll('[data-follower-name]').forEach((button) => {
+    button.addEventListener('click', () => openFollowerProfile(button.getAttribute('data-follower-name')));
+  });
 }
 
 function syncAccountExperience() {
