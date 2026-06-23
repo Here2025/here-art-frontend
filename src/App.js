@@ -169,6 +169,28 @@ function rawCategory(item) {
   return item?.category || item?.mainCategory || item?.main_category || item?.eventType || item?.event_type || '';
 }
 
+function readStoredSet(key) {
+  if (typeof window === 'undefined') return new Set();
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(parsed) ? parsed : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function writeStoredSet(key, value) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(Array.from(value || [])));
+  } catch {
+    // Ignore storage errors so the app still works.
+  }
+}
+
 function mapUrl(x) {
   const lat = x?.lat ?? x?.latitude;
   const lng = x?.lng ?? x?.longitude;
@@ -221,10 +243,10 @@ export default function App() {
   const [artId, setArtId] = useState(fallbackArtworks[0].id);
   const [eventId, setEventId] = useState(fallbackEvents[0].id);
   const [profileId, setProfileId] = useState(fallbackProfiles[0].id);
-  const [saved, setSaved] = useState(() => new Set());
-  const [liked, setLiked] = useState(() => new Set());
-  const [visited, setVisited] = useState(() => new Set());
-  const [following, setFollowing] = useState(() => new Set());
+  const [saved, setSaved] = useState(() => readStoredSet('here.saved'));
+  const [liked, setLiked] = useState(() => readStoredSet('here.liked'));
+  const [visited, setVisited] = useState(() => readStoredSet('here.visited'));
+  const [following, setFollowing] = useState(() => readStoredSet('here.following'));
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState('All');
   const [mapQuery, setMapQuery] = useState('');
@@ -280,6 +302,22 @@ export default function App() {
       setPage('profile');
     }
   };
+
+  useEffect(() => {
+    writeStoredSet('here.saved', saved);
+  }, [saved]);
+
+  useEffect(() => {
+    writeStoredSet('here.liked', liked);
+  }, [liked]);
+
+  useEffect(() => {
+    writeStoredSet('here.visited', visited);
+  }, [visited]);
+
+  useEffect(() => {
+    writeStoredSet('here.following', following);
+  }, [following]);
 
   useEffect(() => {
     (async () => {
