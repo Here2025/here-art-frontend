@@ -1,4 +1,5 @@
 import './hereLocalPrototypeStore';
+import './app-profile-type-polish';
 
 const footerTopics = {
   about: {
