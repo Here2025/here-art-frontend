@@ -1,6 +1,7 @@
 import './hereLocalPrototypeStore';
 import './app-auto-refresh-created-content';
 import './app-profile-type-polish';
+import './app-account-workspace';
 
 const footerTopics = {
   about: {
