@@ -71,9 +71,32 @@ const profileTypes = [
   { value: 'curator', label: 'Curator / Host' },
 ];
 
+function hasLocalProfile() {
+  if (typeof window === 'undefined') return false;
+
+  try {
+    const ready = window.localStorage.getItem('here.profile.ready') === 'true';
+    const rawProfiles = window.localStorage.getItem('here.local.created.profiles');
+    const profiles = rawProfiles ? JSON.parse(rawProfiles) : [];
+    return ready || (Array.isArray(profiles) && profiles.length > 0);
+  } catch {
+    return false;
+  }
+}
+
+function rememberProfileReady() {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem('here.profile.ready', 'true');
+  } catch {
+    // Keep Create usable if storage is unavailable.
+  }
+}
+
 export default function AddCreatePage({ api, onNotice }) {
   const [mode, setMode] = useState('profile');
-  const [profileReady, setProfileReady] = useState(false);
+  const [profileReady, setProfileReady] = useState(() => hasLocalProfile());
   const [forms, setForms] = useState(starter);
   const [status, setStatus] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -259,6 +282,7 @@ export default function AddCreatePage({ api, onNotice }) {
           image_url: active.photoPreview || '',
         });
 
+        rememberProfileReady();
         setProfileReady(true);
         setStatus(
           'Profile created. Artwork / Place and Event are now available. Choose either option, or add both in any order.'
@@ -275,6 +299,7 @@ export default function AddCreatePage({ api, onNotice }) {
       console.warn(submitError);
 
       if (mode === 'profile') {
+        rememberProfileReady();
         setProfileReady(true);
         setStatus(
           'Profile step saved locally for now. Artwork / Place and Event are now available as posting options. Backend profile saving still needs final connection.'
