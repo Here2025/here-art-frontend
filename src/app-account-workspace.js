@@ -8,6 +8,23 @@ function readLocalProfile() {
   }
 }
 
+function readFollowers() {
+  try {
+    const raw = window.localStorage.getItem('here.local.followers');
+    const followers = raw ? JSON.parse(raw) : [];
+
+    if (Array.isArray(followers) && followers.length) return followers;
+  } catch {
+    // Fall back to prototype followers below.
+  }
+
+  return [
+    { name: 'HERE City Curator', handle: '@here-curator', note: 'Curator profile' },
+    { name: 'Walllight Studio', handle: '@walllight', note: 'Artist profile' },
+    { name: 'Oak City Sound', handle: '@oakcitysound', note: 'Creative host' },
+  ];
+}
+
 function displayName(profile) {
   return profile?.displayName || profile?.display_name || profile?.name || 'your HERE profile';
 }
@@ -16,6 +33,15 @@ function profileType(profile) {
   const type = profile?.profileType || profile?.profile_type || 'artist';
   if (type === 'street_artist') return 'Artist';
   return String(type).replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function followerInitials(name = 'HERE') {
+  return String(name)
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'H';
 }
 
 function ensureAccountStyles() {
@@ -36,7 +62,8 @@ function ensureAccountStyles() {
     }
 
     .here-account-workspace p,
-    .here-account-workspace h2 {
+    .here-account-workspace h2,
+    .here-account-workspace h3 {
       margin: 0;
     }
 
@@ -55,7 +82,7 @@ function ensureAccountStyles() {
     .here-account-actions,
     .create-gate-note.ready .button-row {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 10px;
       align-items: stretch;
       width: 100%;
@@ -88,6 +115,72 @@ function ensureAccountStyles() {
     .create-gate-note.ready .button-row {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       margin-top: 12px;
+    }
+
+    .here-followers-panel {
+      border-top: 1px solid #111;
+      padding-top: 18px;
+      display: none;
+      gap: 14px;
+    }
+
+    .here-followers-panel.show {
+      display: grid;
+    }
+
+    .here-followers-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .here-follower-card {
+      border: 1px solid #111;
+      border-radius: 20px;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+    }
+
+    .here-follower-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #111;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 0.78rem;
+      font-weight: 900;
+    }
+
+    .here-follower-card strong,
+    .here-follower-card small {
+      display: block;
+    }
+
+    .here-follower-card small {
+      color: #555;
+      margin-top: 3px;
+    }
+
+    .here-follower-note {
+      grid-column: 1 / -1;
+      font-size: 0.84rem;
+      color: #555;
+    }
+
+    @media (max-width: 960px) {
+      .here-account-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .here-followers-list {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 760px) {
@@ -160,10 +253,34 @@ function relabelProfileNav(profile) {
   });
 }
 
+function followerCards() {
+  return readFollowers()
+    .map((follower) => `
+      <article class="here-follower-card">
+        <span class="here-follower-avatar">${followerInitials(follower.name)}</span>
+        <span>
+          <strong>${follower.name}</strong>
+          <small>${follower.handle || ''}</small>
+        </span>
+        <p class="here-follower-note">${follower.note || 'Follower'}</p>
+      </article>
+    `)
+    .join('');
+}
+
+function toggleFollowers(panel) {
+  const followers = panel.querySelector('[data-account-followers-panel]');
+  const button = panel.querySelector('[data-account-action="followers"]');
+  const isOpen = followers?.classList.toggle('show');
+
+  if (button) button.textContent = isOpen ? 'Hide followers' : 'Followers';
+}
+
 function renderAccountWorkspace(profile) {
   const profilePage = document.querySelector('.profile-page');
   if (!profilePage || document.querySelector('[data-here-account-workspace]')) return;
 
+  const followers = readFollowers();
   const panel = document.createElement('section');
   panel.className = 'here-account-workspace';
   panel.setAttribute('data-here-account-workspace', 'true');
@@ -175,14 +292,26 @@ function renderAccountWorkspace(profile) {
       <button type="button" data-account-action="edit-profile">Edit profile</button>
       <button type="button" data-account-action="add-artwork">Add artwork/place</button>
       <button type="button" data-account-action="add-event">Add event</button>
+      <button type="button" data-account-action="followers">Followers</button>
       <button type="button" class="secondary" data-account-action="my-space">Saved & following</button>
     </div>
+    <section class="here-followers-panel" data-account-followers-panel="true">
+      <div>
+        <p class="account-kicker">Followers</p>
+        <h3>${followers.length} followers</h3>
+      </div>
+      <div class="here-followers-list">
+        ${followerCards()}
+      </div>
+      <p class="here-follower-note">These are prototype followers for the local account experience. Live follower data will come from real accounts when authentication is connected.</p>
+    </section>
   `;
 
   profilePage.insertBefore(panel, profilePage.firstChild);
   panel.querySelector('[data-account-action="edit-profile"]')?.addEventListener('click', () => goToCreate('profile'));
   panel.querySelector('[data-account-action="add-artwork"]')?.addEventListener('click', () => goToCreate('artwork'));
   panel.querySelector('[data-account-action="add-event"]')?.addEventListener('click', () => goToCreate('event'));
+  panel.querySelector('[data-account-action="followers"]')?.addEventListener('click', () => toggleFollowers(panel));
   panel.querySelector('[data-account-action="my-space"]')?.addEventListener('click', () => findButtonByText(['My Space', 'Saved'])?.click());
 }
 
