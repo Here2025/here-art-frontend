@@ -1,3 +1,5 @@
+import './hereLocalPrototypeStore';
+
 const footerTopics = {
   about: {
     title: 'About HERE',
