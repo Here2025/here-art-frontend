@@ -94,6 +94,11 @@ function rememberProfileReady() {
   }
 }
 
+function reloadContentSoon() {
+  if (typeof window === 'undefined') return;
+  window.setTimeout(() => window.location.reload(), 900);
+}
+
 export default function AddCreatePage({ api, onNotice }) {
   const [mode, setMode] = useState('profile');
   const [profileReady, setProfileReady] = useState(() => hasLocalProfile());
@@ -227,7 +232,8 @@ export default function AddCreatePage({ api, onNotice }) {
           lng: active.lng ? Number(active.lng) : null,
         });
 
-        setStatus('Artwork/place submitted. You can add another artwork/place or switch to Event.');
+        setStatus('Artwork/place submitted. Updating your HERE workspace...');
+        reloadContentSoon();
       } else if (mode === 'event') {
         const displayType = active.localLabel.trim() || active.mainCategory;
 
@@ -259,7 +265,8 @@ export default function AddCreatePage({ api, onNotice }) {
           ticket_url: active.ticketUrl.trim(),
         });
 
-        setStatus('Event submitted. You can add another event or switch to Artwork / Place.');
+        setStatus('Event submitted. Updating your HERE workspace...');
+        reloadContentSoon();
       } else {
         const specialty = active.specialty.trim();
         const bio = active.bio.trim();
@@ -285,8 +292,9 @@ export default function AddCreatePage({ api, onNotice }) {
         rememberProfileReady();
         setProfileReady(true);
         setStatus(
-          'Profile created. Artwork / Place and Event are now available. Choose either option, or add both in any order.'
+          'Profile created. Your account workspace is ready. Updating HERE...'
         );
+        reloadContentSoon();
       }
 
       setForms((current) => ({
@@ -294,7 +302,7 @@ export default function AddCreatePage({ api, onNotice }) {
         [mode]: starter[mode],
       }));
 
-      onNotice?.('Submission received. Refresh content after backend review/approval is connected.');
+      onNotice?.('Submission received. Updating your HERE workspace.');
     } catch (submitError) {
       console.warn(submitError);
 
@@ -302,14 +310,16 @@ export default function AddCreatePage({ api, onNotice }) {
         rememberProfileReady();
         setProfileReady(true);
         setStatus(
-          'Profile step saved locally for now. Artwork / Place and Event are now available as posting options. Backend profile saving still needs final connection.'
+          'Profile step saved locally. Your account workspace is ready. Updating HERE...'
         );
         onNotice?.(
-          'Profile step completed locally for this session. Backend profile route still needs final connection.'
+          'Profile step completed locally for this session. Updating your HERE workspace.'
         );
+        reloadContentSoon();
       } else {
-        setStatus('Saved as a prototype submission. Backend posting for this type still needs to be finalized.');
-        onNotice?.('The form works. Next step is finalizing the matching backend create route.');
+        setStatus('Saved locally as a prototype submission. Updating your HERE workspace...');
+        onNotice?.('The form works locally. Updating your HERE workspace.');
+        reloadContentSoon();
       }
     } finally {
       setSubmitting(false);
@@ -332,8 +342,13 @@ export default function AddCreatePage({ api, onNotice }) {
 
         {profileReady && (
           <div className="create-gate-note ready">
-            <strong>Posting options unlocked</strong>
-            <span>Add artwork/place, add an event, or add both in any order.</span>
+            <strong>My account workspace</strong>
+            <span>Edit your profile, add artwork/place, add an event, or add both in any order.</span>
+            <div className="button-row">
+              <button type="button" onClick={() => chooseMode('profile')}>Edit profile</button>
+              <button type="button" onClick={() => chooseMode('artwork')}>Add artwork/place</button>
+              <button type="button" onClick={() => chooseMode('event')}>Add event</button>
+            </div>
           </div>
         )}
 
