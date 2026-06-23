@@ -59,6 +59,17 @@ const eventCategories = [
   'Journeys / Art Walks',
 ];
 
+const profileTypes = [
+  { value: 'explorer', label: 'Explorer' },
+  { value: 'artist', label: 'Artist' },
+  { value: 'designer', label: 'Designer / Fashion Brand' },
+  { value: 'musician', label: 'Musician / Performer' },
+  { value: 'gallery', label: 'Gallery' },
+  { value: 'venue', label: 'Venue' },
+  { value: 'collective', label: 'Collective' },
+  { value: 'curator', label: 'Curator / Host' },
+];
+
 export default function AddCreatePage({ api, onNotice }) {
   const [mode, setMode] = useState('profile');
   const [profileReady, setProfileReady] = useState(false);
@@ -230,13 +241,15 @@ export default function AddCreatePage({ api, onNotice }) {
           displayName: active.displayName.trim(),
           handle: active.handle.trim(),
           profileType: active.profileType,
+          profile_type: active.profileType,
           city: active.city.trim(),
           region: active.region.trim(),
           state: active.region.trim(),
           country: active.country.trim(),
           website: active.website.trim(),
           bio: active.bio.trim(),
-          imageUrl: '',
+          imageUrl: active.photoPreview || '',
+          image_url: active.photoPreview || '',
         });
 
         setProfileReady(true);
@@ -585,14 +598,9 @@ function ProfileFields({ value, update, updateProfilePhoto }) {
 
       <Field label="Profile type">
         <select value={value.profileType} onChange={(e) => update('profileType', e.target.value)}>
-          <option value="explorer">Explorer</option>
-          <option value="street_artist">Street Artist</option>
-          <option value="designer">Designer / Fashion Brand</option>
-          <option value="musician">Musician / Performer</option>
-          <option value="gallery">Gallery</option>
-          <option value="venue">Venue</option>
-          <option value="collective">Collective</option>
-          <option value="curator">Curator / Host</option>
+          {profileTypes.map((type) => (
+            <option value={type.value} key={type.value}>{type.label}</option>
+          ))}
         </select>
       </Field>
 
