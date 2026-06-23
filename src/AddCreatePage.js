@@ -34,6 +34,7 @@ const starter = {
     displayName: '',
     handle: '',
     profileType: 'explorer',
+    specialty: '',
     city: '',
     region: '',
     country: '',
@@ -237,17 +238,23 @@ export default function AddCreatePage({ api, onNotice }) {
 
         setStatus('Event submitted. You can add another event or switch to Artwork / Place.');
       } else {
+        const specialty = active.specialty.trim();
+        const bio = active.bio.trim();
+        const displayBio = [specialty ? `Specialty: ${specialty}` : '', bio].filter(Boolean).join('\n\n');
+
         await postSubmission('/api/profiles', {
           displayName: active.displayName.trim(),
           handle: active.handle.trim(),
           profileType: active.profileType,
           profile_type: active.profileType,
+          specialty,
+          discipline: specialty,
           city: active.city.trim(),
           region: active.region.trim(),
           state: active.region.trim(),
           country: active.country.trim(),
           website: active.website.trim(),
-          bio: active.bio.trim(),
+          bio: displayBio,
           imageUrl: active.photoPreview || '',
           image_url: active.photoPreview || '',
         });
@@ -602,6 +609,14 @@ function ProfileFields({ value, update, updateProfilePhoto }) {
             <option value={type.value} key={type.value}>{type.label}</option>
           ))}
         </select>
+      </Field>
+
+      <Field label="Specialty / discipline">
+        <input
+          value={value.specialty || ''}
+          onChange={(e) => update('specialty', e.target.value)}
+          placeholder="Muralist, painter, photographer, fashion designer, performer..."
+        />
       </Field>
 
       <Field label="Website">
