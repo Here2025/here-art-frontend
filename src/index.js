@@ -11,7 +11,9 @@ import './app-footer.css';
 import './app-typography.css';
 import './app-investor-demo.css';
 import './app-navigation-scroll.js';
-import './app-footer.js';
+import './hereLocalPrototypeStore';
+import './app-auto-refresh-created-content';
+import './app-profile-type-polish';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
