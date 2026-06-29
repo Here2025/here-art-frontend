@@ -66,8 +66,13 @@ function profileSpecialty(profile) {
   return match?.[1] || '';
 }
 
+function cleanLocalImage(value = '') {
+  const image = String(value || '');
+  return image.startsWith('blob:') ? '' : image;
+}
+
 function profileImage(profile) {
-  return profile?.imageUrl || profile?.image_url || '';
+  return cleanLocalImage(profile?.imageUrl || profile?.image_url || '');
 }
 
 function profileToForm(profile) {
@@ -89,6 +94,7 @@ function buildUpdatedProfile(original, form) {
   const specialty = form.specialty.trim();
   const bio = form.bio.trim();
   const displayBio = [specialty ? `Specialty: ${specialty}` : '', bio].filter(Boolean).join('\n\n');
+  const imageUrl = cleanLocalImage(form.imageUrl);
 
   return {
     ...original,
@@ -107,8 +113,8 @@ function buildUpdatedProfile(original, form) {
     website: form.website.trim(),
     website_url: form.website.trim(),
     bio: displayBio || 'A creative account on HERE.',
-    imageUrl: form.imageUrl,
-    image_url: form.imageUrl,
+    imageUrl,
+    image_url: imageUrl,
     localOnly: true,
   };
 }
