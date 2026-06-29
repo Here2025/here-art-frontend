@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AddCreatePage from './AddCreatePage';
+import MyAccountPage from './MyAccountPage';
 
 const API = 'https://here-art-backend-production.up.railway.app';
 const CENTER = { lat: 35.7796, lng: -78.6382 };
@@ -33,10 +34,10 @@ const categoryOptions = [
 const categoryVisuals = {
   'Street Art': art[0],
   'Public Art': art[1],
-  'Gallery': art[2],
-  'Museum': art[3],
+  Gallery: art[2],
+  Museum: art[3],
   'Performing Arts': 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=900&q=80',
-  'Fashion': 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80',
+  Fashion: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80',
   'Hidden Gem': art[5],
 };
 
@@ -75,6 +76,7 @@ function normArt(x, i) {
     neighborhood: x.neighborhood || x.area || x.address || 'Nearby',
     lat: Number.isFinite(lat) ? lat : null,
     lng: Number.isFinite(lng) ? lng : null,
+    localOnly: Boolean(x.localOnly),
   };
 }
 
@@ -84,11 +86,14 @@ function normProfile(x, i) {
     displayName: x.displayName || x.display_name || x.name || 'Creative profile',
     handle: x.handle || '',
     profileType: x.profileType || x.profile_type || 'artist',
+    specialty: x.specialty || x.discipline || '',
     bio: x.bio || 'A creative account on HERE.',
     city: x.city || 'Raleigh',
-    state: x.state || 'NC',
+    state: x.state || x.region || 'NC',
+    country: x.country || '',
     website: x.website || x.websiteUrl || x.website_url || '',
     imageUrl: x.imageUrl || x.image_url || people[i % people.length],
+    localOnly: Boolean(x.localOnly),
   };
 }
 
@@ -101,7 +106,7 @@ function normEvent(x, i) {
     venueName: x.venueName || x.venue_name || '',
     address: x.address || '',
     city: x.city || 'Raleigh',
-    state: x.state || 'NC',
+    state: x.state || x.region || 'NC',
     latitude: Number(x.latitude ?? x.lat),
     longitude: Number(x.longitude ?? x.lng),
     startsAt: x.startsAt || x.starts_at || '',
@@ -110,6 +115,7 @@ function normEvent(x, i) {
     hostProfileId: x.hostProfileId || x.host_profile_id || null,
     imageUrl: x.imageUrl || x.image_url || art[(i + 1) % art.length],
     ticketUrl: x.ticketUrl || x.ticket_url || x.websiteUrl || x.website_url || '',
+    localOnly: Boolean(x.localOnly),
   };
 }
 
@@ -149,7 +155,6 @@ function typeLabel(v = '') {
 
 function normalizeCategory(v = '') {
   const text = String(v || '').toLowerCase();
-
   if (text.includes('street art') || text.includes('mural') || text.includes('graffiti')) return 'Street Art';
   if (text.includes('public art') || text.includes('installation') || text.includes('sculpture') || text.includes('monument') || text.includes('memorial')) return 'Public Art';
   if (text.includes('gallery') || text.includes('galleries') || text.includes('studio') || text.includes('exhibition') || text.includes('artspace') || text.includes('arts center') || text.includes('creative space')) return 'Gallery';
@@ -157,7 +162,6 @@ function normalizeCategory(v = '') {
   if (text.includes('performing') || text.includes('performance') || text.includes('music') || text.includes('theatre') || text.includes('theater') || text.includes('opera') || text.includes('ballet') || text.includes('symphony') || text.includes('concert') || text.includes('stage') || text.includes('venue')) return 'Performing Arts';
   if (text.includes('fashion') || text.includes('designer') || text.includes('runway') || text.includes('brand') || text.includes('style')) return 'Fashion';
   if (text.includes('hidden') || text.includes('gem')) return 'Hidden Gem';
-
   return '';
 }
 
@@ -171,7 +175,6 @@ function rawCategory(item) {
 
 function readStoredSet(key) {
   if (typeof window === 'undefined') return new Set();
-
   try {
     const raw = window.localStorage.getItem(key);
     const parsed = raw ? JSON.parse(raw) : [];
@@ -183,7 +186,6 @@ function readStoredSet(key) {
 
 function writeStoredSet(key, value) {
   if (typeof window === 'undefined') return;
-
   try {
     window.localStorage.setItem(key, JSON.stringify(Array.from(value || [])));
   } catch {
@@ -220,19 +222,14 @@ function match(x, q) {
 
 function matchCat(item, category) {
   if (!category || category === 'All') return true;
-
   const normalized = normalizeCategory(rawCategory(item));
-
-  if (normalized) {
-    return normalized === category;
-  }
-
+  if (normalized) return normalized === category;
   const option = categoryOptions.find((c) => c.label === category);
   if (!option) return true;
-
   const text = categoryText(item);
   return option.terms?.some((term) => text.includes(term)) ?? true;
 }
+
 export default function App() {
   const api = useMemo(() => (process.env.REACT_APP_API_URL || API).replace(/\/$/, ''), []);
   const [page, setPage] = useState('discover');
@@ -303,21 +300,10 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    writeStoredSet('here.saved', saved);
-  }, [saved]);
-
-  useEffect(() => {
-    writeStoredSet('here.liked', liked);
-  }, [liked]);
-
-  useEffect(() => {
-    writeStoredSet('here.visited', visited);
-  }, [visited]);
-
-  useEffect(() => {
-    writeStoredSet('here.following', following);
-  }, [following]);
+  useEffect(() => { writeStoredSet('here.saved', saved); }, [saved]);
+  useEffect(() => { writeStoredSet('here.liked', liked); }, [liked]);
+  useEffect(() => { writeStoredSet('here.visited', visited); }, [visited]);
+  useEffect(() => { writeStoredSet('here.following', following); }, [following]);
 
   useEffect(() => {
     (async () => {
@@ -379,6 +365,7 @@ export default function App() {
         {page === 'map' && <MapPage box={mapBox} artworks={filteredMapArtworks} selected={selectedArt} saved={saved.has(selectedArt.id)} visited={visited.has(selectedArt.id)} setSelected={setArtId} save={() => flip(setSaved, selectedArt.id)} check={() => flip(setVisited, selectedArt.id)} q={mapQuery} setQ={setMapQuery} category={mapCategory} setCategory={setMapCategory} />}
         {page === 'events' && <EventsPage event={selectedEvent} host={host} events={events} saved={saved.has(selectedEvent.id)} save={() => flip(setSaved, selectedEvent.id)} openEvent={openEvent} openProfile={openProfile} />}
         {page === 'create' && <AddCreatePage api={api} onNotice={setNotice} />}
+        {page === 'account' && <MyAccountPage profiles={profiles} artworks={artworks} events={events} savedArtworks={artworks.filter((a) => saved.has(a.id))} savedEvents={events.filter((e) => saved.has(e.id))} likedArtworks={artworks.filter((a) => liked.has(a.id))} checkIns={artworks.filter((a) => visited.has(a.id))} followed={profiles.filter((p) => following.has(p.id))} openArt={openArt} openEvent={openEvent} openProfile={openProfile} setPage={setPage} />}
         {page === 'profile' && <ProfilePage profile={selectedProfile} profiles={profiles} artworks={artworks} events={profileEvents} journeys={profileJourneys} followed={following.has(selectedProfile.id)} follow={() => flip(setFollowing, selectedProfile.id)} openProfile={openProfile} openEvent={openEvent} />}
         {page === 'saved' && <SavedPage savedArtworks={artworks.filter((a) => saved.has(a.id))} savedEvents={events.filter((e) => saved.has(e.id))} likedArtworks={artworks.filter((a) => liked.has(a.id))} checkIns={artworks.filter((a) => visited.has(a.id))} followed={profiles.filter((p) => following.has(p.id))} openArt={openArt} openEvent={openEvent} openProfile={openProfile} />}
       </main>
@@ -388,7 +375,8 @@ export default function App() {
 }
 
 function AppHeader({ page, setPage }) {
-  return <header className="here-app-header"><button className="here-brand" onClick={() => setPage('discover')} type="button"><span>H</span><strong>HERE</strong></button><p>Find art where you are.</p><nav className="desktop-nav">{['discover', 'map', 'events', 'create', 'saved', 'profile'].map((x) => <button className={page === x ? 'active' : ''} key={x} onClick={() => setPage(x)} type="button">{x === 'discover' ? 'Discover' : x === 'saved' ? 'My Space' : x[0].toUpperCase() + x.slice(1)}</button>)}</nav></header>;
+  const navItems = [['discover', 'Discover'], ['map', 'Map'], ['events', 'Events'], ['create', 'Create'], ['saved', 'My Space'], ['account', 'My Account'], ['profile', 'Profiles']];
+  return <header className="here-app-header"><button className="here-brand" onClick={() => setPage('discover')} type="button"><span>H</span><strong>HERE</strong></button><p>Find art where you are.</p><nav className="desktop-nav">{navItems.map(([key, label]) => <button className={page === key ? 'active' : ''} key={key} onClick={() => setPage(key)} type="button">{label}</button>)}</nav></header>;
 }
 
 function DiscoverPage({ artworks, events, selectedArt, saved, liked, query, cat, setQuery, setCat, clear, save, like, openArt, openEvent, openMap, openEvents }) {
@@ -398,49 +386,7 @@ function DiscoverPage({ artworks, events, selectedArt, saved, liked, query, cat,
   const visibleEvents = showAllEvents ? events : relatedEvents;
   const hero = places[0] || selectedArt;
   const visibleCategories = categoryOptions.filter((x) => x.label !== 'All');
-
-  return (
-    <section className="page discover-page">
-      <div className="discover-hero">
-        <p className="small-kicker">Street and public artist visibility starts here</p>
-        <h1>Find art<br />where you are</h1>
-        <p className="hero-subcopy">
-          HERE is a location-based creative discovery app for street art, public art, galleries, performances, fashion, events, and hidden cultural places.
-        </p>
-        <SearchBar text="Search art, places, artists, events, or cities..." value={query} onChange={setQuery} />
-        <FeatureArtwork artwork={hero} onClick={() => openArt(hero)} />
-      </div>
-
-      <div className="discover-sidebar">
-        <SectionHeader title="Explore creative categories" action="Clear filters" onAction={clear} />
-
-        <div className="category-grid-real category-grid-expanded">
-          {visibleCategories.map((x) => (
-            <button className={cat === x.label ? 'active' : ''} key={x.label} onClick={() => setCat(x.label)} type="button">
-              <ImageTile item={{ imageUrl: categoryVisuals[x.label] || art[0], title: '' }} />
-              <span>{x.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <SectionHeader title={cat === 'All' && !query ? 'Creative places near you' : 'Matching creative places'} action="See map" onAction={openMap} />
-        <div className="content-grid three">
-          {places.slice(0, 3).map((a) => (
-            <ArtworkCard key={a.id} artwork={a} saved={saved.has(a.id)} liked={liked.has(a.id)} save={() => save(a.id)} like={() => like(a.id)} onClick={() => openArt(a)} />
-          ))}
-          {!places.length && <p className="empty-text">No matching places yet. Try another search or clear filters.</p>}
-        </div>
-
-        <SectionHeader title={showAllEvents ? 'Creative events' : 'Related creative events'} action="See events" onAction={openEvents} />
-        <div className="content-grid three">
-          {visibleEvents.slice(0, 3).map((e) => (
-            <EventCard key={e.id} event={e} onClick={() => openEvent(e)} />
-          ))}
-          {!visibleEvents.length && <p className="empty-text">No related events for this filter yet.</p>}
-        </div>
-      </div>
-    </section>
-  );
+  return <section className="page discover-page"><div className="discover-hero"><p className="small-kicker">Street and public artist visibility starts here</p><h1>Find art<br />where you are</h1><p className="hero-subcopy">HERE is a location-based creative discovery app for street art, public art, galleries, performances, fashion, events, and hidden cultural places.</p><SearchBar text="Search art, places, artists, events, or cities..." value={query} onChange={setQuery} /><FeatureArtwork artwork={hero} onClick={() => openArt(hero)} /></div><div className="discover-sidebar"><SectionHeader title="Explore creative categories" action="Clear filters" onAction={clear} /><div className="category-grid-real category-grid-expanded">{visibleCategories.map((x) => <button className={cat === x.label ? 'active' : ''} key={x.label} onClick={() => setCat(x.label)} type="button"><ImageTile item={{ imageUrl: categoryVisuals[x.label] || art[0], title: '' }} /><span>{x.label}</span></button>)}</div><SectionHeader title={cat === 'All' && !query ? 'Creative places near you' : 'Matching creative places'} action="See map" onAction={openMap} /><div className="content-grid three">{places.slice(0, 3).map((a) => <ArtworkCard key={a.id} artwork={a} saved={saved.has(a.id)} liked={liked.has(a.id)} save={() => save(a.id)} like={() => like(a.id)} onClick={() => openArt(a)} />)}{!places.length && <p className="empty-text">No matching places yet. Try another search or clear filters.</p>}</div><SectionHeader title={showAllEvents ? 'Creative events' : 'Related creative events'} action="See events" onAction={openEvents} /><div className="content-grid three">{visibleEvents.slice(0, 3).map((e) => <EventCard key={e.id} event={e} onClick={() => openEvent(e)} />)}{!visibleEvents.length && <p className="empty-text">No related events for this filter yet.</p>}</div></div></section>;
 }
 
 function MapPage({ box, artworks, selected, saved, visited, setSelected, save, check, q, setQ, category, setCategory }) {
@@ -456,88 +402,7 @@ function EventsPage({ event, host, events, saved, save, openEvent, openProfile }
 function ProfilePage({ profile, profiles, artworks, events, journeys, followed, follow, openProfile, openEvent }) {
   const [tab, setTab] = useState('artworks');
   const [messageOpen, setMessageOpen] = useState(false);
-
-  return (
-    <section className="page profile-page">
-      <aside className="profile-info-panel">
-        <div className="profile-head-real">
-          <Avatar profile={profile} large />
-          <div>
-            <h1>{profile.displayName}</h1>
-            <p>{profile.handle ? `@${profile.handle}` : typeLabel(profile.profileType)}</p>
-            <span>{[profile.city, profile.state].filter(Boolean).join(', ')}</span>
-            {profile.website && <a href={profile.website} target="_blank" rel="noreferrer">{profile.website}</a>}
-          </div>
-        </div>
-
-        <div className="stats-grid">
-          <span><strong>{artworks.length}</strong>Artworks</span>
-          <span><strong>{events.length}</strong>Events</span>
-          <span><strong>{journeys.length}</strong>Journeys</span>
-          <span><strong>{followed ? '1.2K+' : '1.2K'}</strong>Followers</span>
-        </div>
-
-        <div className="button-row">
-          <button className={followed ? 'active' : ''} onClick={follow} type="button">{followed ? 'Following' : 'Follow'}</button>
-          <button onClick={() => setMessageOpen((v) => !v)} type="button">Message</button>
-        </div>
-
-        {messageOpen && (
-          <div className="message-panel">
-            <strong>Message {profile.displayName}</strong>
-            <p>Messaging will connect when HERE accounts are added. For now, this confirms the message action is working.</p>
-            <button onClick={() => setMessageOpen(false)} type="button">Close</button>
-          </div>
-        )}
-
-        <p>{profile.bio}</p>
-      </aside>
-
-      <div className="profile-gallery-panel">
-        <div className="tabs-real">
-          <button className={tab === 'artworks' ? 'active' : ''} onClick={() => setTab('artworks')} type="button">Artworks</button>
-          <button className={tab === 'events' ? 'active' : ''} onClick={() => setTab('events')} type="button">Events</button>
-          <button className={tab === 'journeys' ? 'active' : ''} onClick={() => setTab('journeys')} type="button">Journeys</button>
-        </div>
-
-        {tab === 'artworks' && (
-          artworks.length ? (
-            <div className="profile-art-grid-real">{artworks.slice(0, 6).map((a) => <ImageTile key={a.id} item={a} />)}</div>
-          ) : (
-            <p className="empty-text">No artwork connected to this profile yet.</p>
-          )
-        )}
-
-        {tab === 'events' && (
-          events.length ? (
-            <div className="content-grid three">{events.slice(0, 6).map((e) => <EventCard key={e.id} event={e} onClick={() => openEvent(e)} />)}</div>
-          ) : (
-            <p className="empty-text">No events posted by this profile yet.</p>
-          )
-        )}
-
-        {tab === 'journeys' && (
-          journeys.length ? (
-            <div className="content-grid three">{journeys.slice(0, 6).map((j) => <JourneyCard key={j.id} journey={j} />)}</div>
-          ) : (
-            <p className="empty-text">No journeys created by this profile yet.</p>
-          )
-        )}
-      </div>
-
-      <section className="full-row">
-        <SectionHeader title="More creators" />
-        <div className="creator-row">
-          {profiles.filter((x) => x.id !== profile.id).slice(0, 5).map((x) => (
-            <button key={x.id} onClick={() => openProfile(x)} type="button">
-              <Avatar profile={x} />
-              <span>{x.displayName}</span>
-            </button>
-          ))}
-        </div>
-      </section>
-    </section>
-  );
+  return <section className="page profile-page"><aside className="profile-info-panel"><div className="profile-head-real"><Avatar profile={profile} large /><div><h1>{profile.displayName}</h1><p>{profile.handle ? `@${profile.handle}` : typeLabel(profile.profileType)}</p><span>{[profile.city, profile.state].filter(Boolean).join(', ')}</span>{profile.website && <a href={profile.website} target="_blank" rel="noreferrer">{profile.website}</a>}</div></div><div className="stats-grid"><span><strong>{artworks.length}</strong>Artworks</span><span><strong>{events.length}</strong>Events</span><span><strong>{journeys.length}</strong>Journeys</span><span><strong>{followed ? '1.2K+' : '1.2K'}</strong>Followers</span></div><div className="button-row"><button className={followed ? 'active' : ''} onClick={follow} type="button">{followed ? 'Following' : 'Follow'}</button><button onClick={() => setMessageOpen((v) => !v)} type="button">Message</button></div>{messageOpen && <div className="message-panel"><strong>Message {profile.displayName}</strong><p>Messaging will connect when HERE accounts are added. For now, this confirms the message action is working.</p><button onClick={() => setMessageOpen(false)} type="button">Close</button></div>}<p>{profile.bio}</p></aside><div className="profile-gallery-panel"><div className="tabs-real"><button className={tab === 'artworks' ? 'active' : ''} onClick={() => setTab('artworks')} type="button">Artworks</button><button className={tab === 'events' ? 'active' : ''} onClick={() => setTab('events')} type="button">Events</button><button className={tab === 'journeys' ? 'active' : ''} onClick={() => setTab('journeys')} type="button">Journeys</button></div>{tab === 'artworks' && (artworks.length ? <div className="profile-art-grid-real">{artworks.slice(0, 6).map((a) => <ImageTile key={a.id} item={a} />)}</div> : <p className="empty-text">No artwork connected to this profile yet.</p>)}{tab === 'events' && (events.length ? <div className="content-grid three">{events.slice(0, 6).map((e) => <EventCard key={e.id} event={e} onClick={() => openEvent(e)} />)}</div> : <p className="empty-text">No events posted by this profile yet.</p>)}{tab === 'journeys' && (journeys.length ? <div className="content-grid three">{journeys.slice(0, 6).map((j) => <JourneyCard key={j.id} journey={j} />)}</div> : <p className="empty-text">No journeys created by this profile yet.</p>)}</div><section className="full-row"><SectionHeader title="More creators" /><div className="creator-row">{profiles.filter((x) => x.id !== profile.id).slice(0, 5).map((x) => <button key={x.id} onClick={() => openProfile(x)} type="button"><Avatar profile={x} /><span>{x.displayName}</span></button>)}</div></section></section>;
 }
 
 function SavedPage({ savedArtworks, savedEvents, likedArtworks, checkIns, followed, openArt, openEvent, openProfile }) {
@@ -547,7 +412,7 @@ function SavedPage({ savedArtworks, savedEvents, likedArtworks, checkIns, follow
 }
 
 function BottomNav({ page, setPage }) {
-  return <nav className="bottom-app-nav">{[['discover', 'Discover'], ['map', 'Map'], ['events', 'Events'], ['create', 'Create'], ['saved', 'Saved'], ['profile', 'Profile']].map(([p, l]) => <button className={page === p ? 'active' : ''} onClick={() => setPage(p)} key={p} type="button"><span>{l[0]}</span>{l}</button>)}</nav>;
+  return <nav className="bottom-app-nav">{[['discover', 'Discover'], ['map', 'Map'], ['events', 'Events'], ['create', 'Create'], ['saved', 'Saved'], ['account', 'Account']].map(([p, l]) => <button className={page === p ? 'active' : ''} onClick={() => setPage(p)} key={p} type="button"><span>{l[0]}</span>{l}</button>)}</nav>;
 }
 
 function SearchBar({ text, value, onChange }) {
