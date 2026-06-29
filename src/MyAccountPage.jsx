@@ -121,8 +121,10 @@ function findProfileForFollower(follower, profiles) {
   });
 }
 
-function AccountTile({ label, value }) {
-  return <span className="account-stat-tile"><strong>{value}</strong><small>{label}</small></span>;
+function AccountTile({ label, value, onClick }) {
+  const content = <><strong>{value}</strong><small>{label}</small></>;
+  if (onClick) return <button type="button" className="account-stat-tile clickable" onClick={onClick}>{content}</button>;
+  return <span className="account-stat-tile">{content}</span>;
 }
 
 function EmptyPanel({ children }) {
@@ -207,6 +209,7 @@ export default function MyAccountPage({
 
   function saveProfile(event) {
     event.preventDefault();
+
     if (!editForm.displayName.trim()) {
       setNotice('Add a profile name before saving.');
       return;
@@ -229,11 +232,22 @@ export default function MyAccountPage({
 
   function openFollower(follower) {
     const profileMatch = findProfileForFollower(follower, profiles);
+
     if (profileMatch) {
       openProfile?.(profileMatch);
       return;
     }
-    setNotice(`${follower.name}'s profile is not connected to a live account yet.`);
+
+    setNotice(`${follower.name} is visible as a follower, but that public profile is not connected yet.`);
+  }
+
+  function openFollowing(profileItem) {
+    if (profileItem && openProfile) {
+      openProfile(profileItem);
+      return;
+    }
+
+    setNotice('This followed profile is not connected to the public profile view yet.');
   }
 
   if (!profile) {
@@ -251,10 +265,10 @@ export default function MyAccountPage({
         </div>
 
         <div className="account-stat-grid">
-          <AccountTile label="My artwork/places" value={ownedArtworks.length} />
-          <AccountTile label="My events" value={ownedEvents.length} />
-          <AccountTile label="Followers" value={followers.length} />
-          <AccountTile label="Following" value={followed.length} />
+          <AccountTile label="My artwork/places" value={ownedArtworks.length} onClick={() => setActive('artwork')} />
+          <AccountTile label="My events" value={ownedEvents.length} onClick={() => setActive('events')} />
+          <AccountTile label="Followers" value={followers.length} onClick={() => setActive('followers')} />
+          <AccountTile label="Following" value={followed.length} onClick={() => setActive('following')} />
         </div>
 
         <div className="account-action-row">
@@ -279,7 +293,7 @@ export default function MyAccountPage({
         {active === 'artwork' && (ownedArtworks.length ? <div className="account-card-grid">{ownedArtworks.map((item) => <button key={item.id} type="button" onClick={() => openArt?.(item)}>{item.imageUrl || item.image_url ? <img src={item.imageUrl || item.image_url} alt={item.title} /> : <span>{initials(item.title).slice(0, 1)}</span>}<strong>{item.title}</strong><small>{item.category || item.address || 'Creative place'}</small></button>)}</div> : <EmptyPanel>No artwork or places posted yet. Use Add artwork/place to build your profile.</EmptyPanel>)}
         {active === 'events' && (ownedEvents.length ? <div className="account-card-grid">{ownedEvents.map((eventItem) => <button key={eventItem.id} type="button" onClick={() => openEvent?.(eventItem)}>{eventItem.imageUrl || eventItem.image_url ? <img src={eventItem.imageUrl || eventItem.image_url} alt={eventItem.title} /> : <span>{initials(eventItem.title).slice(0, 1)}</span>}<strong>{eventItem.title}</strong><small>{eventItem.eventType || eventItem.event_type || eventItem.venueName || 'Creative event'}</small></button>)}</div> : <EmptyPanel>No events posted yet. Use Add event to share openings, shows, pop-ups, walks, or performances.</EmptyPanel>)}
         {active === 'followers' && <div className="account-card-grid follower-grid">{followers.map((follower) => <button key={`${follower.name}-${follower.handle}`} type="button" onClick={() => openFollower(follower)}><span>{initials(follower.name)}</span><strong>{follower.name}</strong><small>{follower.handle || follower.note}</small></button>)}</div>}
-        {active === 'following' && (followed.length ? <div className="account-card-grid follower-grid">{followed.map((profileItem) => <button key={profileItem.id} type="button" onClick={() => openProfile?.(profileItem)}><span>{initials(profileItem.displayName)}</span><strong>{profileItem.displayName}</strong><small>{displayType(profileItem)}</small></button>)}</div> : <EmptyPanel>You are not following anyone yet. Follow artists, galleries, hosts, and collectives from their public profiles.</EmptyPanel>)}
+        {active === 'following' && (followed.length ? <div className="account-card-grid follower-grid">{followed.map((profileItem) => <button key={profileItem.id || profileItem.handle || profileItem.displayName} type="button" onClick={() => openFollowing(profileItem)}><span>{initials(profileItem.displayName || profileItem.name)}</span><strong>{profileItem.displayName || profileItem.name}</strong><small>Open public profile</small></button>)}</div> : <EmptyPanel>You are not following anyone yet. Follow artists, galleries, hosts, and collectives from their public profiles.</EmptyPanel>)}
         {active === 'saved' && <div className="account-overview-grid"><article><p className="small-kicker">Saved</p><h2>{savedArtworks.length + savedEvents.length}</h2><p>Saved places and events live in My Space.</p><button type="button" onClick={() => setPage?.('saved')}>Open My Space</button></article><article><p className="small-kicker">Activity</p><h2>{likedArtworks.length + checkIns.length}</h2><p>Liked artwork and check-ins help shape your creative trail.</p></article></div>}
         {active === 'settings' && <div className="account-overview-grid"><article><p className="small-kicker">Prototype status</p><h2>Local account</h2><p>This account currently lives in this browser. The next backend step is real authentication, image storage, account ownership, and permissions.</p></article><article><p className="small-kicker">Needed before launch</p><h2>Account foundation</h2><p>Connect sign up/login, profile ownership, edit/delete rights, uploads, followers, reporting, and privacy controls.</p></article></div>}
       </div>
