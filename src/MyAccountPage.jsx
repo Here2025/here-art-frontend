@@ -7,6 +7,17 @@ const fallbackFollowers = [
   { name: 'Oak City Sound', handle: '@oakcitysound', note: 'Creative host' },
 ];
 
+const profileTypes = [
+  { value: 'explorer', label: 'Explorer' },
+  { value: 'artist', label: 'Artist' },
+  { value: 'designer', label: 'Designer / Fashion Brand' },
+  { value: 'musician', label: 'Musician / Performer' },
+  { value: 'gallery', label: 'Gallery' },
+  { value: 'venue', label: 'Venue' },
+  { value: 'collective', label: 'Collective' },
+  { value: 'curator', label: 'Curator / Host' },
+];
+
 function readLocalList(key) {
   if (typeof window === 'undefined') return [];
 
@@ -15,6 +26,16 @@ function readLocalList(key) {
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
+  }
+}
+
+function writeLocalList(key, value) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Keep the account page usable if local storage is unavailable.
   }
 }
 
@@ -41,6 +62,60 @@ function initials(value = 'HERE') {
     .join('') || 'H';
 }
 
+function profileBioWithoutSpecialty(profile) {
+  return String(profile?.bio || '').replace(/Specialty:\s*[^\n]+/i, '').trim();
+}
+
+function profileSpecialty(profile) {
+  const direct = profile?.specialty || profile?.discipline || '';
+  if (direct) return direct;
+  const match = String(profile?.bio || '').match(/Specialty:\s*([^\n]+)/i);
+  return match?.[1] || '';
+}
+
+function profileToForm(profile) {
+  return {
+    displayName: profile?.displayName || profile?.display_name || '',
+    handle: normalizeHandle(profile?.handle || ''),
+    profileType: profile?.profileType || profile?.profile_type || 'explorer',
+    specialty: profileSpecialty(profile),
+    city: profile?.city || '',
+    region: profile?.region || profile?.state || '',
+    country: profile?.country || '',
+    website: profile?.website || profile?.websiteUrl || profile?.website_url || '',
+    bio: profileBioWithoutSpecialty(profile),
+    imageUrl: profile?.imageUrl || profile?.image_url || '',
+  };
+}
+
+function buildUpdatedProfile(original, form) {
+  const specialty = form.specialty.trim();
+  const bio = form.bio.trim();
+  const displayBio = [specialty ? `Specialty: ${specialty}` : '', bio].filter(Boolean).join('\n\n');
+
+  return {
+    ...original,
+    id: original?.id || `local-profile-${Date.now()}`,
+    displayName: form.displayName.trim() || 'Creative profile',
+    display_name: form.displayName.trim() || 'Creative profile',
+    handle: normalizeHandle(form.handle),
+    profileType: form.profileType,
+    profile_type: form.profileType,
+    specialty,
+    discipline: specialty,
+    city: form.city.trim(),
+    state: form.region.trim(),
+    region: form.region.trim(),
+    country: form.country.trim(),
+    website: form.website.trim(),
+    website_url: form.website.trim(),
+    bio: displayBio || 'A creative account on HERE.',
+    imageUrl: form.imageUrl.trim(),
+    image_url: form.imageUrl.trim(),
+    localOnly: true,
+  };
+}
+
 function findProfileForFollower(follower, profiles) {
   const followerHandle = normalizeHandle(follower.handle);
   return profiles.find((profile) => {
@@ -62,6 +137,31 @@ function EmptyPanel({ children }) {
   return <p className="account-empty-panel">{children}</p>;
 }
 
+function EditProfileForm({ form, setForm, onSave, onCancel }) {
+  function update(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  return (
+    <form className="account-edit-form" onSubmit={onSave}>
+      <label><span>Profile name</span><input value={form.displayName} onChange={(event) => update('displayName', event.target.value)} /></label>
+      <label><span>Handle</span><input value={form.handle} onChange={(event) => update('handle', event.target.value)} /></label>
+      <label><span>Profile type</span><select value={form.profileType} onChange={(event) => update('profileType', event.target.value)}>{profileTypes.map((type) => <option value={type.value} key={type.value}>{type.label}</option>)}</select></label>
+      <label><span>Specialty / discipline</span><input value={form.specialty} onChange={(event) => update('specialty', event.target.value)} /></label>
+      <label><span>City</span><input value={form.city} onChange={(event) => update('city', event.target.value)} /></label>
+      <label><span>Region / State / Province</span><input value={form.region} onChange={(event) => update('region', event.target.value)} /></label>
+      <label><span>Country</span><input value={form.country} onChange={(event) => update('country', event.target.value)} /></label>
+      <label><span>Website</span><input value={form.website} onChange={(event) => update('website', event.target.value)} /></label>
+      <label className="wide"><span>Profile image URL</span><input value={form.imageUrl} onChange={(event) => update('imageUrl', event.target.value)} placeholder="Permanent image upload comes next" /></label>
+      <label className="wide"><span>Bio</span><textarea value={form.bio} onChange={(event) => update('bio', event.target.value)} /></label>
+      <div className="account-edit-actions">
+        <button type="button" className="secondary" onClick={onCancel}>Cancel</button>
+        <button type="submit">Save profile</button>
+      </div>
+    </form>
+  );
+}
+
 export default function MyAccountPage({
   profiles = [],
   artworks = [],
@@ -76,9 +176,11 @@ export default function MyAccountPage({
   openProfile,
   setPage,
 }) {
+  const initialProfile = useMemo(() => readCurrentProfile() || profiles.find((p) => p.localOnly) || null, [profiles]);
   const [active, setActive] = useState('overview');
   const [notice, setNotice] = useState('');
-  const currentProfile = useMemo(() => readCurrentProfile(), []);
+  const [profile, setProfile] = useState(initialProfile);
+  const [editForm, setEditForm] = useState(() => profileToForm(initialProfile));
   const localArtworks = useMemo(() => readLocalList('here.local.created.artworks'), []);
   const localEvents = useMemo(() => readLocalList('here.local.created.events'), []);
   const followers = useMemo(() => {
@@ -86,7 +188,6 @@ export default function MyAccountPage({
     return savedFollowers.length ? savedFollowers : fallbackFollowers;
   }, []);
 
-  const profile = currentProfile || profiles.find((p) => p.localOnly) || null;
   const ownedArtworks = localArtworks.length ? localArtworks : artworks.filter((item) => item.localOnly);
   const ownedEvents = localEvents.length ? localEvents : events.filter((item) => item.localOnly);
 
@@ -95,6 +196,35 @@ export default function MyAccountPage({
       window.localStorage.setItem('here.create.intent', mode);
     }
     setPage?.('create');
+  }
+
+  function startEditProfile() {
+    setEditForm(profileToForm(profile));
+    setNotice('');
+    setActive('edit');
+  }
+
+  function saveProfile(event) {
+    event.preventDefault();
+
+    if (!editForm.displayName.trim()) {
+      setNotice('Add a profile name before saving.');
+      return;
+    }
+
+    const updatedProfile = buildUpdatedProfile(profile, editForm);
+    const existingProfiles = readLocalList('here.local.created.profiles').filter((item) => item.id !== updatedProfile.id);
+    writeLocalList('here.local.created.profiles', [updatedProfile, ...existingProfiles]);
+
+    try {
+      window.localStorage.setItem('here.profile.ready', 'true');
+    } catch {
+      // Keep editing usable.
+    }
+
+    setProfile(updatedProfile);
+    setNotice('Profile updated in My Account.');
+    setActive('overview');
   }
 
   function openFollower(follower) {
@@ -146,10 +276,10 @@ export default function MyAccountPage({
         </div>
 
         <div className="account-action-row">
-          <button type="button" onClick={() => goCreate('profile')}>Edit profile</button>
+          <button type="button" onClick={startEditProfile}>Edit profile</button>
           <button type="button" onClick={() => goCreate('artwork')}>Add artwork/place</button>
           <button type="button" onClick={() => goCreate('event')}>Add event</button>
-          <button type="button" className="secondary" onClick={() => setPage?.('profile')}>View public profile</button>
+          <button type="button" className="secondary" onClick={() => openProfile?.(profile)}>View public profile</button>
         </div>
       </div>
 
@@ -158,6 +288,7 @@ export default function MyAccountPage({
       <div className="account-tabs">
         {[
           ['overview', 'Overview'],
+          ['edit', 'Edit profile'],
           ['artwork', 'My artwork'],
           ['events', 'My events'],
           ['followers', 'Followers'],
@@ -165,7 +296,7 @@ export default function MyAccountPage({
           ['saved', 'Saved'],
           ['settings', 'Settings'],
         ].map(([id, label]) => (
-          <button className={active === id ? 'active' : ''} key={id} onClick={() => setActive(id)} type="button">{label}</button>
+          <button className={active === id ? 'active' : ''} key={id} onClick={() => (id === 'edit' ? startEditProfile() : setActive(id))} type="button">{label}</button>
         ))}
       </div>
 
@@ -190,6 +321,8 @@ export default function MyAccountPage({
           </div>
         )}
 
+        {active === 'edit' && <EditProfileForm form={editForm} setForm={setEditForm} onSave={saveProfile} onCancel={() => setActive('overview')} />}
+
         {active === 'artwork' && (
           ownedArtworks.length ? (
             <div className="account-card-grid">
@@ -207,11 +340,11 @@ export default function MyAccountPage({
         {active === 'events' && (
           ownedEvents.length ? (
             <div className="account-card-grid">
-              {ownedEvents.map((event) => (
-                <button key={event.id} type="button" onClick={() => openEvent?.(event)}>
-                  {event.imageUrl || event.image_url ? <img src={event.imageUrl || event.image_url} alt={event.title} /> : <span>{initials(event.title).slice(0, 1)}</span>}
-                  <strong>{event.title}</strong>
-                  <small>{event.eventType || event.event_type || event.venueName || 'Creative event'}</small>
+              {ownedEvents.map((eventItem) => (
+                <button key={eventItem.id} type="button" onClick={() => openEvent?.(eventItem)}>
+                  {eventItem.imageUrl || eventItem.image_url ? <img src={eventItem.imageUrl || eventItem.image_url} alt={eventItem.title} /> : <span>{initials(eventItem.title).slice(0, 1)}</span>}
+                  <strong>{eventItem.title}</strong>
+                  <small>{eventItem.eventType || eventItem.event_type || eventItem.venueName || 'Creative event'}</small>
                 </button>
               ))}
             </div>
