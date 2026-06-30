@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { resizeProfilePhoto } from './resizeProfilePhoto';
 import './my-account-page.css';
 
 const fallbackFollowers = [
@@ -29,11 +30,12 @@ function readLocalList(key) {
 }
 
 function writeLocalList(key, value) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') return false;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
+    return true;
   } catch {
-    // Keep the account page usable if local storage is unavailable.
+    return false;
   }
 }
 
@@ -138,15 +140,23 @@ function EmptyPanel({ children }) {
 }
 
 function EditProfileForm({ form, setForm, onSave, onCancel }) {
+  const [photoStatus, setPhotoStatus] = useState('');
+
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
   function choosePhoto(file) {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => update('imageUrl', String(reader.result || ''));
-    reader.readAsDataURL(file);
+    setPhotoStatus('Preparing photo...');
+    resizeProfilePhoto(
+      file,
+      (photoData) => {
+        update('imageUrl', photoData);
+        setPhotoStatus('Photo ready. Save profile to keep it.');
+      },
+      (message) => setPhotoStatus(message)
+    );
   }
 
   return (
@@ -157,6 +167,7 @@ function EditProfileForm({ form, setForm, onSave, onCancel }) {
           <h2>Edit profile</h2>
           <p>Update the essentials people see on your HERE profile.</p>
           <label className="account-photo-button">Choose profile picture<input type="file" accept="image/*" onChange={(event) => choosePhoto(event.target.files?.[0])} /></label>
+          {photoStatus && <p className="account-photo-status">{photoStatus}</p>}
         </div>
       </div>
 
@@ -223,7 +234,7 @@ export default function MyAccountPage({
 
     const updatedProfile = buildUpdatedProfile(profile, editForm);
     const existingProfiles = readLocalList('here.local.created.profiles').filter((item) => item.id !== updatedProfile.id);
-    writeLocalList('here.local.created.profiles', [updatedProfile, ...existingProfiles]);
+    const saved = writeLocalList('here.local.created.profiles', [updatedProfile, ...existingProfiles]);
 
     try {
       window.localStorage.setItem('here.profile.ready', 'true');
@@ -232,7 +243,7 @@ export default function MyAccountPage({
     }
 
     setProfile(updatedProfile);
-    setNotice('Profile updated in My Account.');
+    setNotice(saved ? 'Profile updated in My Account.' : 'Profile updated for this session. The photo may be too large to keep after refresh.');
     setActive('overview');
   }
 
